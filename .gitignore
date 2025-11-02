@@ -265,6 +265,9 @@ ServiceFabricBackup/
 *.mdf
 *.ldf
 *.ndf
+# Ignore appsettings files that may contain secrets
+appsettings.json
+appsettings.*.json
 
 # Business Intelligence projects
 *.rdl.data
