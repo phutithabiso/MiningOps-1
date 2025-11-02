@@ -1,0 +1,108 @@
+﻿<Window x:Class="MiningOps.Dialogs.PaymentProcessingDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:converters="clr-namespace:MiningOps.Converters"
+        Title="Process Payment" Height="450" Width="500"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize">
+
+    <Window.Resources>
+        <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+    </Window.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Process Payment" 
+                   FontSize="18" FontWeight="Bold" Margin="0,0,0,20"/>
+
+        <StackPanel Grid.Row="1">
+            <Grid Margin="0,0,0,15">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="150"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Invoice Selection -->
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Select Invoice:" FontWeight="Bold" Margin="0,5"/>
+                <ComboBox Grid.Row="0" Grid.Column="1" 
+                          ItemsSource="{Binding Invoices}"
+                          DisplayMemberPath="InvoiceReference"
+                          SelectedItem="{Binding SelectedInvoice}"
+                          Margin="0,0,0,10"/>
+
+                <!-- Invoice Details (Read-only) -->
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Invoice Amount:" FontWeight="Bold" Margin="0,5"/>
+                <TextBlock Grid.Row="1" Grid.Column="1" 
+                           Text="{Binding SelectedInvoice.Amount, StringFormat='{}{0:C2}'}"
+                           FontWeight="Bold" Foreground="#1976D2"
+                           Margin="0,0,0,10" VerticalAlignment="Center"/>
+
+                <!-- Payment Amount -->
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Payment Amount:" FontWeight="Bold" Margin="0,5"/>
+                <TextBox Grid.Row="2" Grid.Column="1" 
+                         Text="{Binding Amount, StringFormat='{}{0:F2}'}"
+                         Margin="0,0,0,10"
+                         materialDesign:HintAssist.Hint="Enter payment amount (auto-filled with invoice amount)"/>
+
+                <!-- Payment Reference -->
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="Payment Reference:" FontWeight="Bold" Margin="0,5"/>
+                <TextBox Grid.Row="3" Grid.Column="1" 
+                         Text="{Binding PaymentReference}"
+                         Margin="0,0,0,10"
+                         materialDesign:HintAssist.Hint="Auto-generated payment reference"/>
+
+                <!-- Approved By -->
+                <TextBlock Grid.Row="4" Grid.Column="0" Text="Approved By:" FontWeight="Bold" Margin="0,5"/>
+                <TextBox Grid.Row="4" Grid.Column="1" 
+                         Text="{Binding ApprovedByName}"
+                         IsEnabled="False"
+                         Margin="0,0,0,10"
+                         materialDesign:HintAssist.Hint="Current user"/>
+            </Grid>
+
+            <!-- Invoice Details Panel - Using custom NullToVisibilityConverter -->
+            <Border Background="#F8F9FA" BorderBrush="#DEE2E6" BorderThickness="1" 
+                    CornerRadius="5" Padding="10" Margin="0,10,0,0"
+                    Visibility="{Binding SelectedInvoice, Converter={StaticResource NullToVisibilityConverter}}">
+                <StackPanel>
+                    <TextBlock Text="Selected Invoice Details" FontWeight="Bold" Margin="0,0,0,5"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0" Text="Order:" FontWeight="SemiBold" Margin="0,0,5,0"/>
+                        <TextBlock Grid.Column="1" Text="{Binding SelectedInvoice.Order.OrderId}" Margin="0,0,10,0"/>
+
+                        <TextBlock Grid.Column="2" Text="Due Date:" FontWeight="SemiBold" Margin="0,0,5,0"/>
+                        <TextBlock Grid.Column="3" Text="{Binding SelectedInvoice.DueDate, StringFormat='MM/dd/yyyy'}" />
+                    </Grid>
+                    <TextBlock Text="{Binding SelectedInvoice.Order.Supplier.CompanyName}" 
+                               FontStyle="Italic" Foreground="#6C757D" Margin="0,5,0,0"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="Cancel" Width="80" Height="30" Margin="0,0,10,0"
+                    Click="CancelButton_Click"/>
+            <Button Content="Process Payment" Width="120" Height="30" Background="#1976D2" Foreground="White"
+                    Click="ProcessButton_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

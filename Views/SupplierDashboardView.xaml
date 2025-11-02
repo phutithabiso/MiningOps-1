@@ -1,0 +1,366 @@
+﻿<UserControl x:Class="MiningOps.Views.SupplierDashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:converters="clr-namespace:MiningOps.Converters"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="800" d:DesignWidth="1200">
+    <UserControl.Resources>
+        <converters:CountToVisibilityConverter x:Key="CountToVisibilityConverter" />
+        <converters:StatusToColorConverter x:Key="StatusToColorConverter" />
+        <converters:DateTimeToReadableConverter x:Key="DateTimeToReadableConverter" />
+
+        <!-- Card Style -->
+        <Style x:Key="DashboardCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="15"/>
+        </Style>
+
+        <!-- Metric Value Style -->
+        <Style x:Key="MetricValueStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="24"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="#333333"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+        </Style>
+
+        <!-- Metric Label Style -->
+        <Style x:Key="MetricLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="#666666"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,5,0,0"/>
+        </Style>
+
+        <!-- Button Style -->
+        <Style x:Key="RoundedButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#2196F3"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="20">
+            <!-- Welcome Header -->
+            <Grid Margin="0,0,0,20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="Supplier Portal" 
+                              FontSize="28" FontWeight="Bold" Foreground="#333333"/>
+                    <TextBlock Text="{Binding SupplierName}" 
+                              FontSize="16" Foreground="#666666" Margin="0,5,0,0"/>
+                </StackPanel>
+
+                <Button Grid.Column="1" Content="🔄 Refresh" 
+                        Command="{Binding RefreshCommand}"
+                        Style="{StaticResource RoundedButtonStyle}"/>
+            </Grid>
+
+            <!-- Order Statistics -->
+            <TextBlock Text="📊 Order Overview" FontSize="20" FontWeight="Bold" 
+                      Foreground="#333333" Margin="0,0,0,15"/>
+
+            <Grid Margin="0,0,0,30">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Total Orders -->
+                <Border Grid.Column="0" Background="#2196F3" CornerRadius="8" Padding="15">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource MetricValueStyle}" Text="{Binding TotalOrders}" Foreground="White"/>
+                        <TextBlock Style="{StaticResource MetricLabelStyle}" Text="Total Orders" Foreground="White"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Pending Orders -->
+                <Border Grid.Column="2" Background="#FF9800" CornerRadius="8" Padding="15">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource MetricValueStyle}" Text="{Binding PendingOrders}" Foreground="White"/>
+                        <TextBlock Style="{StaticResource MetricLabelStyle}" Text="Pending" Foreground="White"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Confirmed Orders -->
+                <Border Grid.Column="4" Background="#4CAF50" CornerRadius="8" Padding="15">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource MetricValueStyle}" Text="{Binding ConfirmedOrders}" Foreground="White"/>
+                        <TextBlock Style="{StaticResource MetricLabelStyle}" Text="Confirmed" Foreground="White"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Completed Orders -->
+                <Border Grid.Column="6" Background="#607D8B" CornerRadius="8" Padding="15">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource MetricValueStyle}" Text="{Binding CompletedOrders}" Foreground="White"/>
+                        <TextBlock Style="{StaticResource MetricLabelStyle}" Text="Completed" Foreground="White"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Total Order Value -->
+                <Border Grid.Column="8" Background="#9C27B0" CornerRadius="8" Padding="15">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource MetricValueStyle}" Text="{Binding TotalOrderValue, StringFormat=C}" Foreground="White"/>
+                        <TextBlock Style="{StaticResource MetricLabelStyle}" Text="Order Value" Foreground="White"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Financial Overview -->
+            <TextBlock Text="💰 Financial Overview" FontSize="20" FontWeight="Bold" 
+                      Foreground="#333333" Margin="0,0,0,15"/>
+
+            <Grid Margin="0,0,0,30">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Total Invoiced -->
+                <Border Grid.Column="0" Background="#009688" CornerRadius="8" Padding="15">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource MetricValueStyle}" Text="{Binding TotalInvoicedAmount, StringFormat=C}" Foreground="White"/>
+                        <TextBlock Style="{StaticResource MetricLabelStyle}" Text="Total Invoiced" Foreground="White"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Received Payments -->
+                <Border Grid.Column="2" Background="#4CAF50" CornerRadius="8" Padding="15">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource MetricValueStyle}" Text="{Binding ReceivedPayments, StringFormat=C}" Foreground="White"/>
+                        <TextBlock Style="{StaticResource MetricLabelStyle}" Text="Received" Foreground="White"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Pending Payments -->
+                <Border Grid.Column="4" Background="#FF9800" CornerRadius="8" Padding="15">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource MetricValueStyle}" Text="{Binding PendingPayments, StringFormat=C}" Foreground="White"/>
+                        <TextBlock Style="{StaticResource MetricLabelStyle}" Text="Pending" Foreground="White"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Overdue Invoices -->
+                <Border Grid.Column="6" Background="#F44336" CornerRadius="8" Padding="15">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource MetricValueStyle}" Text="{Binding OverdueInvoices}" Foreground="White"/>
+                        <TextBlock Style="{StaticResource MetricLabelStyle}" Text="Overdue" Foreground="White"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Performance Metrics -->
+            <Grid Margin="0,0,0,20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="20"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="20"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Completion Rate -->
+                <Border Grid.Column="0" Style="{StaticResource DashboardCardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="🎯 Order Completion" FontSize="16" FontWeight="Bold" 
+                                   Foreground="#333333" Margin="0,0,0,10"/>
+                        <TextBlock Text="{Binding CompletionRate}" FontSize="24" FontWeight="Bold" 
+                                   Foreground="#4CAF50" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Average Order Value -->
+                <Border Grid.Column="2" Style="{StaticResource DashboardCardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="📈 Average Order" FontSize="16" FontWeight="Bold" 
+                                   Foreground="#333333" Margin="0,0,0,10"/>
+                        <TextBlock Text="{Binding AverageOrderValue}" FontSize="24" FontWeight="Bold" 
+                                   Foreground="#2196F3" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Payment Collection -->
+                <Border Grid.Column="4" Style="{StaticResource DashboardCardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="💳 Payment Collection" FontSize="16" FontWeight="Bold" 
+                                   Foreground="#333333" Margin="0,0,0,10"/>
+                        <TextBlock Text="{Binding PaymentCollectionRate}" FontSize="24" FontWeight="Bold" 
+                                   Foreground="#9C27B0" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Alerts Section -->
+            <Grid Margin="0,0,0,20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="20"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Overdue Invoice Alerts -->
+                <Border Grid.Column="0" Background="#FFEBEE" BorderBrush="#FFCDD2" BorderThickness="1" CornerRadius="8" 
+                        Padding="15"
+                        Visibility="{Binding OverdueInvoices, Converter={StaticResource CountToVisibilityConverter}}">
+                    <StackPanel>
+                        <TextBlock Text="⏰ Overdue Invoices" FontSize="16" FontWeight="Bold" 
+                                   Foreground="#C62828" Margin="0,0,0,10"/>
+                        <TextBlock Text="{Binding OverdueInvoicesText}" 
+                                   FontWeight="SemiBold" Foreground="#C62828"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Pending Payments Alert -->
+                <Border Grid.Column="2" Background="#FFF3CD" BorderBrush="#FFEEBA" BorderThickness="1" CornerRadius="8" 
+                        Padding="15"
+                        Visibility="{Binding PendingPayments, Converter={StaticResource CountToVisibilityConverter}}">
+                    <StackPanel>
+                        <TextBlock Text="💰 Pending Payments" FontSize="16" FontWeight="Bold" 
+                                   Foreground="#856404" Margin="0,0,0,10"/>
+                        <TextBlock Text="{Binding PendingPaymentsText}" 
+                                   FontWeight="SemiBold" Foreground="#856404"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Recent Activity Section -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="20"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="20"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Recent Orders -->
+                <Border Grid.Column="0" Style="{StaticResource DashboardCardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="📦 Recent Orders" FontSize="18" FontWeight="Bold" 
+                                   Foreground="#333333" Margin="0,0,0,10"/>
+                        <ItemsControl ItemsSource="{Binding RecentOrders}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" 
+                                            Padding="0,5" Margin="0,0,0,5">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="{Binding OrderId, StringFormat='Order # {0}'}" FontWeight="SemiBold"/>
+                                                <TextBlock Text="{Binding TotalAmount, StringFormat='Amount: {0:C}'}" 
+                                                         FontSize="11" Foreground="#666666"/>
+                                                <TextBlock Text="{Binding CreatedAt, StringFormat='Created: {0:MMM dd}'}" 
+                                                         FontSize="11" Foreground="#666666"/>
+                                            </StackPanel>
+                                            <Border Grid.Column="1" Background="{Binding Status, Converter={StaticResource StatusToColorConverter}}"
+                                                    CornerRadius="4" Padding="5,2">
+                                                <TextBlock Text="{Binding Status}" FontSize="10" Foreground="White" 
+                                                           FontWeight="Bold" TextAlignment="Center" MinWidth="60"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Text="No recent orders" FontStyle="Italic" Foreground="#999999" 
+                                   Visibility="{Binding RecentOrders.Count, Converter={StaticResource CountToVisibilityConverter}, ConverterParameter=inverse}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Recent Invoices -->
+                <Border Grid.Column="2" Style="{StaticResource DashboardCardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="🧾 Recent Invoices" FontSize="18" FontWeight="Bold" 
+                                   Foreground="#333333" Margin="0,0,0,10"/>
+                        <ItemsControl ItemsSource="{Binding RecentInvoices}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" 
+                                            Padding="0,5" Margin="0,0,0,5">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="{Binding SafeInvoiceReference}" FontWeight="SemiBold"/>
+                                                <TextBlock Text="{Binding SafeAmount, StringFormat='Amount: {0:C}'}" 
+                                                         FontSize="11" Foreground="#666666"/>
+                                                <TextBlock Text="{Binding InvoiceDate, StringFormat='Date: {0:MMM dd}'}" 
+                                                         FontSize="11" Foreground="#666666"/>
+                                            </StackPanel>
+                                            <Border Grid.Column="1" Background="{Binding SafeStatus, Converter={StaticResource StatusToColorConverter}}"
+                                                    CornerRadius="4" Padding="5,2">
+                                                <TextBlock Text="{Binding SafeStatus}" FontSize="10" Foreground="White" 
+                                                           FontWeight="Bold" TextAlignment="Center" MinWidth="60"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Text="No recent invoices" FontStyle="Italic" Foreground="#999999" 
+                                   Visibility="{Binding RecentInvoices.Count, Converter={StaticResource CountToVisibilityConverter}, ConverterParameter=inverse}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Quick Actions -->
+                <Border Grid.Column="4" Style="{StaticResource DashboardCardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="⚡ Quick Actions" FontSize="18" FontWeight="Bold" 
+                                   Foreground="#333333" Margin="0,0,0,10"/>
+
+                        <Button Content="📊 View All Orders" Background="#2196F3" Foreground="White" 
+                                Padding="15,8" BorderThickness="0" Margin="0,5" Cursor="Hand"
+                                FontSize="14" Command="{Binding ViewOrdersCommand}"/>
+                        <Button Content="🧾 View Invoices" Background="#4CAF50" Foreground="White" 
+                                Padding="15,8" BorderThickness="0" Margin="0,5" Cursor="Hand"
+                                FontSize="14" Command="{Binding ViewInvoicesCommand}"/>
+                        <Button Content="💰 Payment History" Background="#9C27B0" Foreground="White" 
+                                Padding="15,8" BorderThickness="0" Margin="0,5" Cursor="Hand"
+                                FontSize="14" Command="{Binding ViewPaymentsCommand}"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -1,0 +1,643 @@
+Listing files and contents from:
+"C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Models\Entities"
+
+==== Folder: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Models\Entities ==== 
+ 
+--- File: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Models\Entities\Admin.cs --- 
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace MiningOps.Models.Entities
+{
+    public class Admin
+    {
+        [Key]
+        public int AdminId { get; set; }
+
+        [Required]
+        public int AccId { get; set; }
+
+        [ForeignKey(nameof(AccId))]
+        public virtual RegisterMining RegisterMining { get; set; }
+
+        public string Department { get; set; }
+        public bool CanManageUsers { get; set; } = true;
+        public bool CanApproveRequests { get; set; } = true;
+    }
+} 
+----------------------------- 
+ 
+--- File: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Models\Entities\Entities_FileListAndContents.txt --- 
+Listing files and contents from:
+"C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Models\Entities"
+
+==== Folder: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Models\Entities ==== 
+ 
+--- File: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Models\Entities\Admin.cs --- 
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace MiningOps.Models.Entities
+{
+    public class Admin
+    {
+        [Key]
+        public int AdminId { get; set; }
+
+        [Required]
+        public int AccId { get; set; }
+
+        [ForeignKey(nameof(AccId))]
+        public virtual RegisterMining RegisterMining { get; set; }
+
+        public string Department { get; set; }
+        public bool CanManageUsers { get; set; } = true;
+        public bool CanApproveRequests { get; set; } = true;
+    }
+} 
+----------------------------- 
+ 
+--- File: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Models\Entities\Entities_FileListAndContents.txt --- 
+Listing files and contents from:
+"C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Models\Entities"
+
+==== Folder: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Models\Entities ==== 
+ 
+--- File: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Models\Entities\Admin.cs --- 
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace MiningOps.Models.Entities
+{
+    public class Admin
+    {
+        [K 
+----------------------------- 
+ 
+--- File: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Models\Entities\InventoryItem.cs --- 
+﻿using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace MiningOps.Models.Entities
+{
+    public class InventoryItem
+    {
+        [Key]
+        public int InventoryId { get; set; }
+
+        [Required]
+        [StringLength(100)]
+        public string ItemName { get; set; }
+
+        [StringLength(500)]
+        public string Description { get; set; }
+
+        // CHANGED: Non-nullable with defaults to match web app
+        public int Quantity { get; set; } = 0;
+        public decimal UnitCost { get; set; } = 0m;
+        public int ReorderLevel { get; set; } = 0;
+
+        [Required]
+        public int WarehouseId { get; set; }
+        public Warehouse Warehouse { get; set; }
+
+        // CHANGED: Match web app field name
+        public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
+
+        // REMOVED: CreatedAt and UpdatedAt (not in web app)
+
+        // Helper methods for business logic
+        public bool IsLowStock => Quantity <= ReorderLevel;
+        public decimal TotalValue => Quantity * UnitCost;
+    }
+} 
+----------------------------- 
+ 
+--- File: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Models\Entities\Invoice.cs --- 
+﻿using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace MiningOps.Models.Entities
+{
+    public class Invoice
+    {
+        [Key]
+        public int InvoiceId { get; set; }
+
+        [Required]
+        public int OrderId { get; set; }
+
+        [ForeignKey(nameof(OrderId))]
+        public virtual PurchaseOrder Order { get; set; }
+
+        public DateTime InvoiceDate { get; set; } = DateTime.UtcNow;
+
+        // Make problematic fields nullable with safe accessors
+        public DateTime? DueDate { get; set; }
+        public decimal? Amount { get; set; }
+        public InvoiceStatus? Status { get; set; }
+        public string InvoiceReference { get; set; }
+        public string InvoiceFilePath { get; set; }
+
+        // Safe accessor properties for UI binding
+        [NotMapped]
+        public DateTime SafeDueDate => DueDate ?? DateTime.UtcNow.AddDays(30);
+
+        [NotMapped]
+        public decimal SafeAmount => Amount ?? 0m;
+
+        [NotMapped]
+        public InvoiceStatus SafeStatus => Status ?? InvoiceStatus.Unpaid;
+
+        [NotMapped]
+        public string SafeInvoiceReference => InvoiceReference ?? $"INV-{InvoiceId:D6}";
+    }
+    public enum InvoiceStatus
+    {
+        Draft,
+        Sent,
+        Unpaid,
+        Partial,
+        Paid,
+        Overdue,
+        Cancelled
+    }
+} 
+----------------------------- 
+ 
+--- File: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Models\Entities\MaterialRequest.cs --- 
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+
+namespace MiningOps.Models.Entities
+{
+    public class MaterialRequest
+    {
+        [Key]
+        public int MaterialRequestId { get; set; }
+
+        [Required]
+        [MaxLength(200)]
+        public string ItemName { get; set; } = string.Empty;
+
+        [Required]
+        public int Quantity { get; set; }
+
+        [Required]
+        [MaxLength(50)]
+        public string Status { get; set; } = "Pending";
+
+        [Required]
+        public DateTime RequestDate { get; set; } = DateTime.UtcNow;
+
+        // Navigation - matches web app
+        public virtual ICollection<PurchaseOrder> PurchaseOrders { get; set; }
+    }
+} 
+----------------------------- 
+ 
+--- File: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Models\Entities\New Text Document.bat --- 
+@echo off
+setlocal enabledelayedexpansion
+
+REM === Target folder ===
+set "folder=C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Models\Entities"
+
+REM === Output file ===
+set "output=%~dp0Entities_FileListAndContents.txt"
+
+> "%output%" echo Listing files and contents from:
+>> "%output%" echo "%folder%"
+>> "%output%" echo.
+
+if exist "%folder%" (
+    echo ==== Folder: %folder% ==== >> "%output%"
+    for %%A in ("%folder%\*") do (
+        if exist "%%~fA" (
+            echo. >> "%output%"
+            echo --- File: %%~fA --- >> "%output%"
+            type "%%~fA" >> "%output%" 2>nul
+            echo. >> "%output%"
+            echo ----------------------------- >> "%output%"
+        )
+    )
+) else (
+    echo Folder not found: %folder% >> "%output%"
+)
+
+echo.
+echo ✅ Done! Output saved to: "%output%"
+pause
+ 
+----------------------------- 
+ 
+--- File: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Models\Entities\Notification.cs --- 
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System;
+
+namespace MiningOps.Models.Entities
+{
+    public class Notification
+    {
+        public int NotificationId { get; set; }
+        public string Title { get; set; }
+        public string Message { get; set; }
+        public NotificationType Type { get; set; }
+        public NotificationPriority Priority { get; set; }
+        public bool IsRead { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public int? RelatedEntityId { get; set; } // OrderId, RequestId, etc.
+        public string RelatedEntityType { get; set; } // "Order", "Request", "Invoice", "Payment"
+        public UserRole TargetRole { get; set; } // Which role should see this notification
+    }
+
+    public enum NotificationType
+    {
+        NewOrder,
+        OrderStatusChange,
+        NewRequest,
+        RequestStatusChange,
+        NewInvoice,
+        PaymentReceived,
+        LowInventory,
+        SystemAlert
+    }
+
+    public enum NotificationPriority
+    {
+        Low,
+        Medium,
+        High,
+        Critical
+    }
+} 
+----------------------------- 
+ 
+--- File: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Models\Entities\OrderItem.cs --- 
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace MiningOps.Models.Entities
+{
+    public class OrderItem : INotifyPropertyChanged
+    {
+        private string _itemName;
+        private int _quantity;
+        private decimal _unitPrice;
+
+        [Key]
+        public int OrderItemId { get; set; }
+
+        [Required]
+        [MaxLength(200)]
+        public string ItemName
+        {
+            get => _itemName;
+            set
+            {
+                _itemName = value;
+                OnPropertyChanged(nameof(ItemName));
+            }
+        }
+
+        [Required]
+        public int Quantity
+        {
+            get => _quantity;
+            set
+            {
+                _quantity = value;
+                OnPropertyChanged(nameof(Quantity));
+                OnPropertyChanged(nameof(TotalPrice)); // Update Total when Quantity changes
+            }
+        }
+
+        [Required]
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal UnitPrice
+        {
+            get => _unitPrice;
+            set
+            {
+                _unitPrice = value;
+                OnPropertyChanged(nameof(UnitPrice));
+                OnPropertyChanged(nameof(TotalPrice)); // Update Total when UnitPrice changes
+            }
+        }
+
+        [NotMapped]
+        public decimal TotalPrice => Quantity * UnitPrice;
+
+        // Foreign Key to PurchaseOrder
+        public int PurchaseOrderId { get; set; }
+
+        [ForeignKey("PurchaseOrderId")]
+        public virtual PurchaseOrder PurchaseOrder { get; set; }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected virtual void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+    }
+} 
+----------------------------- 
+ 
+--- File: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Models\Entities\Payment.cs --- 
+﻿using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace MiningOps.Models.Entities
+{
+    public class Payment
+    {
+        [Key]
+        public int PaymentId { get; set; }
+
+        public int InvoiceId { get; set; }
+
+        // Make nullable to match database
+        public decimal? Amount { get; set; }
+        public string PaymentReference { get; set; }
+
+        public DateTime PaidDate { get; set; } = DateTime.UtcNow;
+        public int? ApprovedById { get; set; }
+
+        [ForeignKey("InvoiceId")]
+        public Invoice Invoice { get; set; }
+
+        [ForeignKey("ApprovedById")]
+        public RegisterMining ApprovedBy { get; set; }
+
+        // Safe accessor for UI and calculations
+        [NotMapped]
+        public decimal SafeAmount => Amount ?? 0m;
+
+        [NotMapped]
+        public string SafePaymentReference => PaymentReference ?? $"PAY-{PaymentId:D6}";
+    }
+} 
+----------------------------- 
+ 
+--- File: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Models\Entities\PurchaseOrder.cs --- 
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace MiningOps.Models.Entities
+{
+    public class PurchaseOrder
+    {
+        [Key]
+        public int OrderId { get; set; }
+
+        [Required]
+        public int SupplierId { get; set; }
+
+        [ForeignKey(nameof(SupplierId))]
+        public virtual Supplier Supplier { get; set; }
+
+        [Required]
+        public int RequestedBy { get; set; }
+
+        [ForeignKey(nameof(RequestedBy))]
+        public virtual RegisterMining Requester { get; set; }
+
+        public string Currency { get; set; } = "ZAR";
+
+        public OrderStatus Status { get; set; } = OrderStatus.Pending;
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? ExpectedDeliveryDate { get; set; }
+
+        public decimal TotalAmount { get; set; } = 0m;
+        public int? MaterialRequestId { get; set; }
+        [ForeignKey(nameof(MaterialRequestId))]
+        public virtual MaterialRequest MaterialRequest { get; set; }
+
+        // Navigation
+        public virtual ICollection<OrderItem> Items { get; set; }
+        public virtual ICollection<Invoice> Invoices { get; set; }
+    }
+
+    public enum OrderStatus
+    {
+        Pending = 0,
+        Confirmed = 1,
+        Dispatched = 2,
+        Completed = 3,
+        Cancelled = 4
+    }
+} 
+----------------------------- 
+ 
+--- File: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Models\Entities\RegisterMining.cs --- 
+﻿using System;
+using System.ComponentModel.DataAnnotations;
+
+namespace MiningOps.Models.Entities
+{
+    public class RegisterMining
+    {
+        [Key]
+        public int AccId { get; set; }
+
+        [Required]
+        [MaxLength(100)]
+        public string FullName { get; set; }
+
+        [Required]
+        [MaxLength(50)]
+        public string Username { get; set; }
+
+        [Required]
+        [EmailAddress]
+        [MaxLength(100)]
+        public string Email { get; set; }
+
+        [Required]
+        [Phone]
+        [MaxLength(15)]
+        public string PhoneNumber { get; set; }
+
+        [Required]
+        [MaxLength(500)]
+        public string PasswordHash { get; set; }
+
+        [Required]
+        [MaxLength(200)]
+        public string Salt { get; set; }
+
+        public UserRole Role { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdatedAt { get; set; }
+
+        // Navigation properties
+        public virtual Admin AdminProfile { get; set; }
+        public virtual Supervisor SupervisorProfile { get; set; }
+        public virtual Supplier SupplierProfile { get; set; }
+    }
+
+    public enum UserRole
+    {
+        Admin,
+        Supervisor,
+        Supplier
+    }
+} 
+----------------------------- 
+ 
+--- File: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Models\Entities\Supervisor.cs --- 
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace MiningOps.Models.Entities
+{
+    public class Supervisor
+    {
+        [Key]
+        public int SupervisorId { get; set; }
+
+        [Required]
+        public int AccId { get; set; }
+
+        [ForeignKey(nameof(AccId))]
+        public virtual RegisterMining RegisterMining { get; set; }
+
+        public string Team { get; set; }
+
+        [MaxLength(200)]
+        public string MineLocation { get; set; }
+
+        [MaxLength(20)]
+        public string Shift { get; set; }
+
+        public bool CanViewReports { get; set; } = true;
+        public bool CanManageTasks { get; set; } = true;
+    }
+} 
+----------------------------- 
+ 
+--- File: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Models\Entities\Supplier.cs --- 
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace MiningOps.Models.Entities
+{
+    public class Supplier
+    {
+        [Key]
+        public int SupplierId { get; set; }
+
+        [Required]
+        public int AccId { get; set; }
+
+        [ForeignKey(nameof(AccId))]
+        public virtual RegisterMining RegisterMining { get; set; }
+
+        [Required]
+        [MaxLength(200)]
+        public string CompanyName { get; set; }
+
+        [Required]
+        [MaxLength(100)]
+        public string ContactPerson { get; set; }
+
+        [MaxLength(300)]
+        public string Address { get; set; }
+
+        public bool CanViewOrders { get; set; } = true;
+        public bool CanManageInventory { get; set; } = false;
+        public virtual ICollection<PurchaseOrder> PurchaseOrders { get; set; }
+
+    }
+} 
+----------------------------- 
+ 
+--- File: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Models\Entities\SupplierStats.cs --- 
+﻿using System.ComponentModel;
+
+namespace MiningOps.Models.Entities
+{
+    public class SupplierStats : INotifyPropertyChanged
+    {
+        private string _companyName;
+        private int _orderCount;
+        private decimal _totalOrderValue;
+
+        public string CompanyName
+        {
+            get => _companyName;
+            set
+            {
+                _companyName = value;
+                OnPropertyChanged(nameof(CompanyName));
+            }
+        }
+
+        public int OrderCount
+        {
+            get => _orderCount;
+            set
+            {
+                _orderCount = value;
+                OnPropertyChanged(nameof(OrderCount));
+            }
+        }
+
+        public decimal TotalOrderValue
+        {
+            get => _totalOrderValue;
+            set
+            {
+                _totalOrderValue = value;
+                OnPropertyChanged(nameof(TotalOrderValue));
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected virtual void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+    }
+} 
+----------------------------- 
+ 
+--- File: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Models\Entities\Warehouse.cs --- 
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+
+namespace MiningOps.Models.Entities
+{
+    public class Warehouse
+    {
+        [Key]
+        public int WarehouseId { get; set; }
+
+        [Required]
+        [MaxLength(150)]
+        public string Name { get; set; }
+
+        [MaxLength(300)]
+        public string Location { get; set; }
+
+        public string Notes { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        // Navigation
+        public virtual ICollection<InventoryItem> InventoryItems { get; set; }
+    }
+} 
+----------------------------- 

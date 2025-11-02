@@ -1,0 +1,331 @@
+﻿<UserControl x:Class="MiningOps.Views.OrderManagementView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:converters="clr-namespace:MiningOps.Converters"
+             mc:Ignorable="d"
+             d:DesignHeight="800" d:DesignWidth="1200">
+
+    <UserControl.Resources>
+        <converters:StatusToColorConverter x:Key="StatusColorConverter"/>
+        <converters:EmptyToVisibilityConverter x:Key="EmptyToVisibilityConverter"/>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        <converters:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
+
+        <Style x:Key="OrderMetricCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="15"/>
+            <Setter Property="Margin" Value="5"/>
+        </Style>
+
+        <Style x:Key="OrderMetricValueStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="#333333"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+        </Style>
+
+        <Style x:Key="OrderMetricLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="#666666"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,5,0,0"/>
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <!-- Order Dashboard -->
+                <RowDefinition Height="Auto"/>
+                <!-- Header -->
+                <RowDefinition Height="Auto"/>
+                <!-- Search and Filter -->
+                <RowDefinition Height="*"/>
+                <!-- Orders DataGrid -->
+            </Grid.RowDefinitions>
+
+            <!-- ORDER MANAGEMENT DASHBOARD -->
+            <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Margin="0,0,0,20">
+                <Border Background="#F8F9FA" CornerRadius="6" Padding="15">
+                    <StackPanel>
+                        <!-- Role-Based Dashboard Header -->
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <TextBlock Text="Order Management Dashboard" FontSize="16" FontWeight="SemiBold" 
+                                       Foreground="#333333"/>
+                            <TextBlock Text=" - My Orders" FontSize="14" FontWeight="Normal" 
+                                       Foreground="#666666" Margin="5,0,0,0"
+                                       Visibility="{Binding IsAdmin, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+                            <TextBlock Text=" - All Orders" FontSize="14" FontWeight="Normal" 
+                                       Foreground="#666666" Margin="5,0,0,0"
+                                       Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                        </StackPanel>
+
+                        <!-- Order Metrics Row -->
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Margin="0,0,0,10">
+                            <UniformGrid Columns="6">
+                                <!-- Total Orders -->
+                                <Border Style="{StaticResource OrderMetricCardStyle}">
+                                    <StackPanel>
+                                        <materialDesign:PackIcon Kind="ClipboardList" Width="20" Height="20" 
+                                                               Foreground="#2196F3" HorizontalAlignment="Center"/>
+                                        <TextBlock Style="{StaticResource OrderMetricValueStyle}" 
+                                                   Text="{Binding TotalOrders}"/>
+                                        <TextBlock Style="{StaticResource OrderMetricLabelStyle}" Text="Total Orders"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Pending Orders -->
+                                <Border Style="{StaticResource OrderMetricCardStyle}">
+                                    <StackPanel>
+                                        <materialDesign:PackIcon Kind="Clock" Width="20" Height="20" 
+                                                               Foreground="#FF9800" HorizontalAlignment="Center"/>
+                                        <TextBlock Style="{StaticResource OrderMetricValueStyle}" 
+                                                   Text="{Binding PendingOrdersCount}"/>
+                                        <TextBlock Style="{StaticResource OrderMetricLabelStyle}" Text="Pending"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Confirmed Orders -->
+                                <Border Style="{StaticResource OrderMetricCardStyle}">
+                                    <StackPanel>
+                                        <materialDesign:PackIcon Kind="CheckCircle" Width="20" Height="20" 
+                                                               Foreground="#4CAF50" HorizontalAlignment="Center"/>
+                                        <TextBlock Style="{StaticResource OrderMetricValueStyle}" 
+                                                   Text="{Binding ConfirmedOrdersCount}"/>
+                                        <TextBlock Style="{StaticResource OrderMetricLabelStyle}" Text="Confirmed"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Dispatched Orders -->
+                                <Border Style="{StaticResource OrderMetricCardStyle}">
+                                    <StackPanel>
+                                        <materialDesign:PackIcon Kind="Truck" Width="20" Height="20" 
+                                                               Foreground="#2196F3" HorizontalAlignment="Center"/>
+                                        <TextBlock Style="{StaticResource OrderMetricValueStyle}" 
+                                                   Text="{Binding DispatchedOrdersCount}"/>
+                                        <TextBlock Style="{StaticResource OrderMetricLabelStyle}" Text="Dispatched"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Completed Orders -->
+                                <Border Style="{StaticResource OrderMetricCardStyle}">
+                                    <StackPanel>
+                                        <materialDesign:PackIcon Kind="Package" Width="20" Height="20" 
+                                                               Foreground="#9C27B0" HorizontalAlignment="Center"/>
+                                        <TextBlock Style="{StaticResource OrderMetricValueStyle}" 
+                                                   Text="{Binding CompletedOrdersCount}"/>
+                                        <TextBlock Style="{StaticResource OrderMetricLabelStyle}" Text="Completed"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Total Order Value -->
+                                <Border Style="{StaticResource OrderMetricCardStyle}">
+                                    <StackPanel>
+                                        <materialDesign:PackIcon Kind="Cash" Width="20" Height="20" 
+                                                               Foreground="#4CAF50" HorizontalAlignment="Center"/>
+                                        <TextBlock Style="{StaticResource OrderMetricValueStyle}" 
+                                                   Text="{Binding TotalOrdersValue, StringFormat='C'}"/>
+                                        <TextBlock Style="{StaticResource OrderMetricLabelStyle}" Text="Total Value"/>
+                                    </StackPanel>
+                                </Border>
+                            </UniformGrid>
+                        </ScrollViewer>
+
+                        <!-- Quick Stats Row -->
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Supplier Distribution -->
+                                <Border Grid.Column="0" Style="{StaticResource OrderMetricCardStyle}" Margin="5,0">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="150">
+                                        <StackPanel>
+                                            <TextBlock Text="Top Suppliers" FontSize="13" FontWeight="SemiBold" 
+                                                       Foreground="#333333" Margin="0,0,0,5"/>
+                                            <ItemsControl ItemsSource="{Binding TopSuppliers}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Grid Margin="0,2">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <TextBlock Grid.Column="0" Text="{Binding CompanyName}" 
+                                                                       FontSize="11" Foreground="#666666" TextTrimming="CharacterEllipsis"/>
+                                                            <TextBlock Grid.Column="1" Text="{Binding OrderCount, StringFormat='({0})'}" 
+                                                                       FontSize="11" FontWeight="SemiBold" Foreground="#2196F3" 
+                                                                       Margin="5,0,0,0"/>
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                            <TextBlock Text="No supplier data" FontStyle="Italic" Foreground="#999999" 
+                                                       FontSize="11" HorizontalAlignment="Center" Margin="0,5"
+                                                       Visibility="{Binding TopSuppliers.Count, Converter={StaticResource EmptyToVisibilityConverter}}"/>
+                                        </StackPanel>
+                                    </ScrollViewer>
+                                </Border>
+
+                                <!-- Recent Activity -->
+                                <Border Grid.Column="1" Style="{StaticResource OrderMetricCardStyle}" Margin="5,0">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="150">
+                                        <StackPanel>
+                                            <TextBlock Text="Recent Orders" FontSize="13" FontWeight="SemiBold" 
+                                                       Foreground="#333333" Margin="0,0,0,5"/>
+                                            <ItemsControl ItemsSource="{Binding RecentOrders}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border BorderBrush="#F0F0F0" BorderThickness="0,0,0,1" Padding="0,3">
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                </Grid.ColumnDefinitions>
+                                                                <StackPanel Grid.Column="0">
+                                                                    <TextBlock Text="{Binding Supplier.CompanyName}" 
+                                                                               FontSize="11" FontWeight="SemiBold" 
+                                                                               Foreground="#333333" TextTrimming="CharacterEllipsis"/>
+                                                                    <TextBlock Text="{Binding CreatedAt, StringFormat='MMM dd'}" 
+                                                                               FontSize="10" Foreground="#666666"/>
+                                                                </StackPanel>
+                                                                <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                                                                    <TextBlock Text="{Binding TotalAmount, StringFormat='C'}" 
+                                                                               FontSize="11" FontWeight="SemiBold" Foreground="#4CAF50"/>
+                                                                    <Border Background="{Binding Status, Converter={StaticResource StatusColorConverter}}" 
+                                                                            CornerRadius="8" Padding="4,1" Margin="0,1,0,0">
+                                                                        <TextBlock Text="{Binding Status}" FontSize="9" FontWeight="SemiBold" 
+                                                                                   Foreground="White" TextAlignment="Center" MinWidth="40"/>
+                                                                    </Border>
+                                                                </StackPanel>
+                                                            </Grid>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                            <TextBlock Text="No recent orders" FontStyle="Italic" Foreground="#999999" 
+                                                       FontSize="11" HorizontalAlignment="Center" Margin="0,5"
+                                                       Visibility="{Binding RecentOrders.Count, Converter={StaticResource EmptyToVisibilityConverter}}"/>
+                                        </StackPanel>
+                                    </ScrollViewer>
+                                </Border>
+                            </Grid>
+                        </ScrollViewer>
+                    </StackPanel>
+                </Border>
+            </ScrollViewer>
+
+            <!-- HEADER -->
+            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,20">
+                <TextBlock Text="Order Management" FontSize="24" FontWeight="Bold" 
+                           Foreground="#333333" VerticalAlignment="Center"/>
+                <!-- Role-based subtitle -->
+                <TextBlock Text=" - My Orders" FontSize="16" FontWeight="Normal" 
+                           Foreground="#666666" VerticalAlignment="Center" Margin="10,0,0,0"
+                           Visibility="{Binding IsAdmin, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+                <TextBlock Text=" - All Orders" FontSize="16" FontWeight="Normal" 
+                           Foreground="#666666" VerticalAlignment="Center" Margin="10,0,0,0"
+                           Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisibilityConverter}}"/>
+
+                <Button Content="+ Create Order" Background="#1976D2" Foreground="White" 
+                        Padding="15,8" BorderThickness="0" Margin="20,0,0,0"
+                        FontSize="14" Cursor="Hand" Command="{Binding CreateOrderCommand}"
+                        materialDesign:ButtonAssist.CornerRadius="2"/>
+            </StackPanel>
+
+            <!-- SEARCH AND FILTER -->
+            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,15">
+                <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
+                         Width="200" Padding="8" Margin="0,0,10,0"
+                         materialDesign:HintAssist.Hint="Search orders..."/>
+                <ComboBox SelectedValue="{Binding StatusFilter}" Width="120" Margin="0,0,10,0"
+                          materialDesign:HintAssist.Hint="Status">
+                    <ComboBoxItem Content="All Status"/>
+                    <ComboBoxItem Content="Pending"/>
+                    <ComboBoxItem Content="Confirmed"/>
+                    <ComboBoxItem Content="Dispatched"/>
+                    <ComboBoxItem Content="Completed"/>
+                    <ComboBoxItem Content="Cancelled"/>
+                </ComboBox>
+                <Button Content="Search" Command="{Binding SearchCommand}" 
+                        Padding="10,5" Margin="0,0,10,0"
+                        materialDesign:ButtonAssist.CornerRadius="2"/>
+                <Button Content="Refresh" Command="{Binding RefreshCommand}" 
+                        Padding="10,5" Background="#6C757D" Foreground="White"
+                        materialDesign:ButtonAssist.CornerRadius="2"/>
+            </StackPanel>
+
+            <!-- ORDERS DATAGRID -->
+            <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                <DataGrid ItemsSource="{Binding Orders}" AutoGenerateColumns="False"
+                          CanUserAddRows="False" IsReadOnly="True" SelectionMode="Single"
+                          Background="White" BorderBrush="#E0E0E0"
+                          SelectedItem="{Binding SelectedOrder}">
+
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Order ID" Binding="{Binding OrderId}" Width="80"/>
+                        <DataGridTextColumn Header="Supplier" Binding="{Binding Supplier.CompanyName}" Width="150"/>
+                        <DataGridTextColumn Header="Requester" Binding="{Binding Requester.FullName}" Width="120"/>
+                        <DataGridTextColumn Header="Total Amount" Binding="{Binding TotalAmount, StringFormat='C'}" Width="100"/>
+                        <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="100">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground">
+                                        <Setter.Value>
+                                            <Binding Path="Status" Converter="{StaticResource StatusColorConverter}"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="Created" Binding="{Binding CreatedAt, StringFormat='MM/dd/yyyy'}" Width="100"/>
+                        <DataGridTextColumn Header="Expected Delivery" Binding="{Binding ExpectedDeliveryDate, StringFormat='MM/dd/yyyy'}" Width="120"/>
+
+                        <!-- Action Buttons -->
+                        <DataGridTemplateColumn Header="Actions" Width="300">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Content="Details" Background="#17A2B8" Foreground="White" 
+                                                Padding="6,3" Margin="2" BorderThickness="0" 
+                                                FontSize="11" Cursor="Hand"
+                                                Command="{Binding DataContext.ViewOrderDetailsCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding}"
+                                                materialDesign:ButtonAssist.CornerRadius="2"/>
+                                        <Button Content="Edit" Background="#FFC107" Foreground="White" 
+                                                Padding="6,3" Margin="2" BorderThickness="0" 
+                                                FontSize="11" Cursor="Hand"
+                                                Command="{Binding DataContext.EditOrderCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding}"
+                                                materialDesign:ButtonAssist.CornerRadius="2"/>
+                                        <Button Content="Update Status" Background="#28A745" Foreground="White" 
+                                                Padding="6,3" Margin="2" BorderThickness="0" 
+                                                FontSize="11" Cursor="Hand"
+                                                Command="{Binding DataContext.UpdateStatusCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding}"
+                                                materialDesign:ButtonAssist.CornerRadius="2"/>
+                                        <Button Content="Delete" Background="#DC3545" Foreground="White" 
+                                                Padding="6,3" Margin="2" BorderThickness="0" 
+                                                FontSize="11" Cursor="Hand"
+                                                Command="{Binding DataContext.DeleteOrderCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding}"
+                                                materialDesign:ButtonAssist.CornerRadius="2"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </ScrollViewer>
+        </Grid>
+    </ScrollViewer>
+</UserControl>

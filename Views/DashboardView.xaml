@@ -1,0 +1,550 @@
+﻿<UserControl x:Class="MiningOps.Views.DashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:converters="clr-namespace:MiningOps.Converters"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             mc:Ignorable="d" 
+             d:DesignHeight="800" d:DesignWidth="1200">
+
+    <UserControl.Resources>
+        <converters:CountToVisibilityConverter x:Key="CountToVisibilityConverter" />
+        <converters:StatusToColorConverter x:Key="StatusToColorConverter" />
+        <converters:DateTimeToReadableConverter x:Key="DateTimeToReadableConverter" />
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+        <!-- Card Style -->
+        <Style x:Key="DashboardCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="15"/>
+        </Style>
+
+        <!-- Metric Value Style -->
+        <Style x:Key="MetricValueStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="24"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="#333333"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+        </Style>
+
+        <!-- Metric Label Style -->
+        <Style x:Key="MetricLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="#666666"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,5,0,0"/>
+        </Style>
+
+        <!-- Button Style with Border for CornerRadius effect -->
+        <Style x:Key="RoundedButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#2196F3"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="20">
+            <!-- Welcome Header -->
+            <Grid Margin="0,0,0,20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="{Binding DashboardTitle}" 
+                              FontSize="28" FontWeight="Bold" Foreground="#333333"/>
+                    <TextBlock Text="{Binding WelcomeMessage}" 
+                              FontSize="16" Foreground="#666666" Margin="0,5,0,0"/>
+                </StackPanel>
+
+                <Button Grid.Column="1" Content="🔄 Refresh" 
+                        Command="{Binding RefreshCommand}"
+                        Style="{StaticResource RoundedButtonStyle}"/>
+            </Grid>
+
+            <!-- ADMIN METRICS SECTION -->
+            <StackPanel Visibility="{Binding ShowAdminMetrics, Converter={StaticResource BoolToVis}}"
+                        Margin="0,0,0,30">
+                <TextBlock Text="System Administration" FontSize="20" FontWeight="Bold" 
+                           Foreground="#333333" Margin="0,0,0,15"/>
+
+                <!-- Main Stats Grid for Admin -->
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="10"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="10"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="10"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="10"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="10"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Admin Metrics Row 1 -->
+                    <Border Grid.Row="0" Grid.Column="0" Background="#2196F3" CornerRadius="8" Padding="15">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource MetricValueStyle}" Text="{Binding TotalUsers}" Foreground="White"/>
+                            <TextBlock Style="{StaticResource MetricLabelStyle}" Text="Total Users" Foreground="White"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Row="0" Grid.Column="2" Background="#FF9800" CornerRadius="8" Padding="15">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource MetricValueStyle}" Text="{Binding TotalSuppliers}" Foreground="White"/>
+                            <TextBlock Style="{StaticResource MetricLabelStyle}" Text="Suppliers" Foreground="White"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Row="0" Grid.Column="4" Background="#7B1FA2" CornerRadius="8" Padding="15">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource MetricValueStyle}" Text="{Binding TotalWarehouses}" Foreground="White"/>
+                            <TextBlock Style="{StaticResource MetricLabelStyle}" Text="Warehouses" Foreground="White"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Row="0" Grid.Column="6" Background="#607D8B" CornerRadius="8" Padding="15">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource MetricValueStyle}" Text="{Binding TotalPayments, StringFormat=C}" Foreground="White"/>
+                            <TextBlock Style="{StaticResource MetricLabelStyle}" Text="Total Payments" Foreground="White"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Row="0" Grid.Column="8" Background="#D32F2F" CornerRadius="8" Padding="15">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource MetricValueStyle}" Text="{Binding OverdueInvoices}" Foreground="White"/>
+                            <TextBlock Style="{StaticResource MetricLabelStyle}" Text="Overdue Invoices" Foreground="White"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Admin Metrics Row 2 -->
+                    <Border Grid.Row="2" Grid.Column="0" Background="#FF5722" CornerRadius="8" Padding="15">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource MetricValueStyle}" Text="{Binding OutstandingInvoices, StringFormat=C}" Foreground="White"/>
+                            <TextBlock Style="{StaticResource MetricLabelStyle}" Text="Outstanding Invoices" Foreground="White"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Row="2" Grid.Column="2" Background="#388E3C" CornerRadius="8" Padding="15">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource MetricValueStyle}" Text="{Binding CompletionRate}" Foreground="White"/>
+                            <TextBlock Style="{StaticResource MetricLabelStyle}" Text="Order Completion" Foreground="White"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Row="2" Grid.Column="4" Background="#1976D2" CornerRadius="8" Padding="15">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource MetricValueStyle}" Text="{Binding ApprovalRate}" Foreground="White"/>
+                            <TextBlock Style="{StaticResource MetricLabelStyle}" Text="Payment Approval" Foreground="White"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </StackPanel>
+
+            <!-- SUPERVISOR METRICS SECTION -->
+            <StackPanel Visibility="{Binding ShowSupervisorMetrics, Converter={StaticResource BoolToVis}}"
+                        Margin="0,0,0,30">
+                <TextBlock Text="Operations Management" FontSize="20" FontWeight="Bold" 
+                           Foreground="#333333" Margin="0,0,0,15"/>
+
+                <!-- Supervisor Metrics Grid -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="10"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="10"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="10"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Background="#4CAF50" CornerRadius="8" Padding="15">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource MetricValueStyle}" Text="{Binding TotalInventoryItems}" Foreground="White"/>
+                            <TextBlock Style="{StaticResource MetricLabelStyle}" Text="Inventory Items" Foreground="White"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="2" Background="#009688" CornerRadius="8" Padding="15">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource MetricValueStyle}" Text="{Binding TotalInventoryValue, StringFormat=C}" Foreground="White"/>
+                            <TextBlock Style="{StaticResource MetricLabelStyle}" Text="Inventory Value" Foreground="White"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="4" Background="#9C27B0" CornerRadius="8" Padding="15">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource MetricValueStyle}" Text="{Binding PendingRequests}" Foreground="White"/>
+                            <TextBlock Style="{StaticResource MetricLabelStyle}" Text="Pending Requests" Foreground="White"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="6" Background="#F44336" CornerRadius="8" Padding="15">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource MetricValueStyle}" Text="{Binding ActiveOrders}" Foreground="White"/>
+                            <TextBlock Style="{StaticResource MetricLabelStyle}" Text="Active Orders" Foreground="White"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- Low Stock Alerts for Supervisor -->
+                <Border Background="#FFF3CD" BorderBrush="#FFEEBA" BorderThickness="1" CornerRadius="8" 
+                        Padding="15" Margin="0,10,0,0"
+                        Visibility="{Binding LowStockItems.Count, Converter={StaticResource CountToVisibilityConverter}}">
+                    <StackPanel>
+                        <TextBlock Text="⚠️ Low Stock Alerts" FontSize="16" FontWeight="Bold" 
+                                   Foreground="#856404" Margin="0,0,0,10"/>
+                        <ItemsControl ItemsSource="{Binding LowStockItems}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="#FFF3CD" BorderBrush="#FFEEBA" BorderThickness="1" 
+                                            CornerRadius="4" Padding="10,5" Margin="0,2">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{Binding ItemName}" 
+                                                       FontWeight="SemiBold" Foreground="#856404"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding Quantity, StringFormat='Stock: {0}'}" 
+                                                       Foreground="#856404" Margin="10,0"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding ReorderLevel, StringFormat='Reorder: {0}'}" 
+                                                       Foreground="#856404" FontSize="10"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!-- SUPPLIER METRICS SECTION -->
+            <StackPanel Visibility="{Binding ShowSupplierMetrics, Converter={StaticResource BoolToVis}}"
+                        Margin="0,0,0,30">
+                <TextBlock Text="Supplier Portal" FontSize="20" FontWeight="Bold" 
+                           Foreground="#333333" Margin="0,0,0,15"/>
+
+                <!-- Supplier Metrics Grid -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="10"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="10"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="10"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Background="#2196F3" CornerRadius="8" Padding="15">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource MetricValueStyle}" Text="{Binding TotalOrders}" Foreground="White"/>
+                            <TextBlock Style="{StaticResource MetricLabelStyle}" Text="Total Orders" Foreground="White"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="2" Background="#FF9800" CornerRadius="8" Padding="15">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource MetricValueStyle}" Text="{Binding PendingOrders}" Foreground="White"/>
+                            <TextBlock Style="{StaticResource MetricLabelStyle}" Text="Pending Orders" Foreground="White"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="4" Background="#4CAF50" CornerRadius="8" Padding="15">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource MetricValueStyle}" Text="{Binding ConfirmedOrders}" Foreground="White"/>
+                            <TextBlock Style="{StaticResource MetricLabelStyle}" Text="Confirmed Orders" Foreground="White"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="6" Background="#9C27B0" CornerRadius="8" Padding="15">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource MetricValueStyle}" Text="{Binding TotalOrderValue, StringFormat=C}" Foreground="White"/>
+                            <TextBlock Style="{StaticResource MetricLabelStyle}" Text="Total Value" Foreground="White"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </StackPanel>
+
+            <!-- COMMON ALERTS SECTION (Visible to all roles with relevant data) -->
+            <Grid Margin="0,0,0,20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="20"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Low Stock Alerts (Common) -->
+                <Border Grid.Column="0" Background="#FFF3CD" BorderBrush="#FFEEBA" BorderThickness="1" CornerRadius="8" 
+                        Padding="15"
+                        Visibility="{Binding LowStockItems.Count, Converter={StaticResource CountToVisibilityConverter}}">
+                    <StackPanel>
+                        <TextBlock Text="⚠️ Low Stock Alerts" FontSize="16" FontWeight="Bold" 
+                                   Foreground="#856404" Margin="0,0,0,10"/>
+                        <ItemsControl ItemsSource="{Binding LowStockItems}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="#FFF3CD" BorderBrush="#FFEEBA" BorderThickness="1" 
+                                            CornerRadius="4" Padding="10,5" Margin="0,2">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{Binding ItemName}" 
+                                                       FontWeight="SemiBold" Foreground="#856404"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding Quantity, StringFormat='Stock: {0}'}" 
+                                                       Foreground="#856404" Margin="10,0"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding ReorderLevel, StringFormat='Reorder: {0}'}" 
+                                                       Foreground="#856404" FontSize="10"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <!-- Overdue Invoice Alerts (Admin only) -->
+                <Border Grid.Column="2" Background="#FFEBEE" BorderBrush="#FFCDD2" BorderThickness="1" CornerRadius="8" 
+                        Padding="15"
+                        Visibility="{Binding ShowAdminMetrics, Converter={StaticResource BoolToVis}}">
+                    <StackPanel>
+                        <TextBlock Text="⏰ Overdue Invoices" FontSize="16" FontWeight="Bold" 
+                                   Foreground="#C62828" Margin="0,0,0,10"/>
+                        <TextBlock Text="{Binding OverdueInvoicesText}" 
+                                   FontWeight="SemiBold" Foreground="#C62828"/>
+                        <TextBlock Text="{Binding OutstandingInvoicesText}" 
+                                   FontSize="12" Foreground="#C62828" Margin="0,5,0,0"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- RECENT ACTIVITY SECTION -->
+            <Grid Margin="0,0,0,20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="20"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="20"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Recent Requests (Supervisor & Admin) -->
+                <Border Grid.Column="0" Style="{StaticResource DashboardCardStyle}"
+                        Visibility="{Binding ShowSupervisorMetrics, Converter={StaticResource BoolToVis}}">
+                    <StackPanel>
+                        <TextBlock Text="📋 Recent Requests" FontSize="18" FontWeight="Bold" 
+                                   Foreground="#333333" Margin="0,0,0,10"/>
+                        <ItemsControl ItemsSource="{Binding RecentRequests}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" 
+                                            Padding="0,5" Margin="0,0,0,5">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="{Binding ItemName}" FontWeight="SemiBold"/>
+                                                <TextBlock Text="{Binding Quantity, StringFormat='Qty: {0}'}" 
+                                                         FontSize="11" Foreground="#666666"/>
+                                                <TextBlock Text="{Binding RequestDate, StringFormat='Requested: {0:MMM dd, yyyy}'}" 
+                                                         FontSize="11" Foreground="#666666"/>
+                                            </StackPanel>
+                                            <Border Grid.Column="1" Background="{Binding Status, Converter={StaticResource StatusToColorConverter}}"
+                                                    CornerRadius="4" Padding="5,2">
+                                                <TextBlock Text="{Binding Status}" FontSize="10" Foreground="White" 
+                                                           FontWeight="Bold"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Text="No recent requests" FontStyle="Italic" Foreground="#999999" 
+                                   Visibility="{Binding RecentRequests.Count, Converter={StaticResource CountToVisibilityConverter}, ConverterParameter=inverse}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Recent Invoices (Admin & Supplier) -->
+                <Border Grid.Column="2" Style="{StaticResource DashboardCardStyle}"
+                        Visibility="{Binding ShowAdminMetrics, Converter={StaticResource BoolToVis}}">
+                    <StackPanel>
+                        <TextBlock Text="🧾 Recent Invoices" FontSize="18" FontWeight="Bold" 
+                                   Foreground="#333333" Margin="0,0,0,10"/>
+                        <ItemsControl ItemsSource="{Binding RecentInvoices}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" 
+                                            Padding="0,5" Margin="0,0,0,5">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="{Binding SafeInvoiceReference}" FontWeight="SemiBold"/>
+                                                <TextBlock Text="{Binding SafeAmount, StringFormat='Amount: {0:C}'}" 
+                                                         FontSize="11" Foreground="#666666"/>
+                                                <TextBlock Text="{Binding InvoiceDate, StringFormat='Date: {0:MMM dd}'}" 
+                                                         FontSize="11" Foreground="#666666"/>
+                                            </StackPanel>
+                                            <Border Grid.Column="1" Background="{Binding SafeStatus, Converter={StaticResource StatusToColorConverter}}"
+                                                    CornerRadius="4" Padding="5,2">
+                                                <TextBlock Text="{Binding SafeStatus}" FontSize="10" Foreground="White" 
+                                                           FontWeight="Bold" TextAlignment="Center" MinWidth="60"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Text="No recent invoices" FontStyle="Italic" Foreground="#999999" 
+                                   Visibility="{Binding RecentInvoices.Count, Converter={StaticResource CountToVisibilityConverter}, ConverterParameter=inverse}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Quick Actions (Role-specific) -->
+                <Border Grid.Column="4" Style="{StaticResource DashboardCardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="⚡ Quick Actions" FontSize="18" FontWeight="Bold" 
+                                   Foreground="#333333" Margin="0,0,0,10"/>
+
+                        <!-- Admin & Supervisor Actions -->
+                        <StackPanel Visibility="{Binding ShowAdminMetrics, Converter={StaticResource BoolToVis}}">
+                            <Button Content="👥 User Management" Background="#607D8B" Foreground="White" 
+                                    Padding="15,8" BorderThickness="0" Margin="0,5" Cursor="Hand"
+                                    FontSize="14" Command="{Binding ManageUsersCommand}"/>
+                        </StackPanel>
+
+                        <StackPanel Visibility="{Binding ShowSupervisorMetrics, Converter={StaticResource BoolToVis}}">
+                            <Button Content="➕ Create New Request" Background="#2196F3" Foreground="White" 
+                                    Padding="15,8" BorderThickness="0" Margin="0,5" Cursor="Hand"
+                                    FontSize="14" Command="{Binding CreateRequestCommand}"/>
+                            <Button Content="📦 Manage Inventory" Background="#4CAF50" Foreground="White" 
+                                    Padding="15,8" BorderThickness="0" Margin="0,5" Cursor="Hand"
+                                    FontSize="14" Command="{Binding ManageInventoryCommand}"/>
+                        </StackPanel>
+
+                        <!-- Common Actions -->
+                        <Button Content="📊 View Orders" Background="#FF9800" Foreground="White" 
+                                Padding="15,8" BorderThickness="0" Margin="0,5" Cursor="Hand"
+                                FontSize="14" Command="{Binding ViewOrdersCommand}"/>
+                        <Button Content="💰 Process Payments" Background="#9C27B0" Foreground="White" 
+                                Padding="15,8" BorderThickness="0" Margin="0,5" Cursor="Hand"
+                                FontSize="14" Command="{Binding ProcessPaymentsCommand}"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- PERFORMANCE & SYSTEM HEALTH SECTION -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="20"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- System Health -->
+                <Border Grid.Column="0" Style="{StaticResource DashboardCardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="📈 System Health" FontSize="18" FontWeight="Bold" 
+                                   Foreground="#333333" Margin="0,0,0,10"/>
+
+                        <Grid Margin="0,5">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Database Connection" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="✅ Connected" Foreground="#4CAF50" FontWeight="Bold"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Last Data Refresh" FontWeight="SemiBold" Margin="0,10,0,0"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding LastRefreshTime, Converter={StaticResource DateTimeToReadableConverter}}" 
+                                       Foreground="#666666" Margin="0,10,0,0"/>
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Active Sessions" FontWeight="SemiBold" Margin="0,10,0,0"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding ActiveUsers}" Foreground="#2196F3" FontWeight="Bold" Margin="0,10,0,0"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Financial Summary (Admin & Supervisor) -->
+                <Border Grid.Column="2" Style="{StaticResource DashboardCardStyle}"
+                        Visibility="{Binding ShowAdminMetrics, Converter={StaticResource BoolToVis}}">
+                    <StackPanel>
+                        <TextBlock Text="💰 Financial Summary" FontSize="18" FontWeight="Bold" 
+                                   Foreground="#333333" Margin="0,0,0,10"/>
+
+                        <Grid Margin="0,5">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Total Inventory Value" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding TotalInventoryValue, StringFormat=C}" 
+                                       Foreground="#4CAF50" FontWeight="Bold"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Outstanding Invoices" FontWeight="SemiBold" Margin="0,5,0,0"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding OutstandingInvoices, StringFormat=C}" 
+                                       Foreground="#FF9800" FontWeight="Bold" Margin="0,5,0,0"/>
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Total Payments" FontWeight="SemiBold" Margin="0,5,0,0"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding TotalPayments, StringFormat=C}" 
+                                       Foreground="#2196F3" FontWeight="Bold" Margin="0,5,0,0"/>
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Monthly Trend" FontWeight="SemiBold" Margin="0,5,0,0"/>
+                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding MonthlyTrend}" 
+                                       Foreground="{Binding TrendColor}" FontWeight="Bold" Margin="0,5,0,0"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

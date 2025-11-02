@@ -1,0 +1,224 @@
+﻿<Window x:Class="MiningOps.Views.UserDetailsDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:converters="clr-namespace:MiningOps.Converters"
+        Title="User Details"
+        Width="600"
+        Height="500"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="#F8F9FA">
+
+    <Window.Resources>
+        <!-- Make sure ALL converters are referenced -->
+        <converters:NullToStatusConverter x:Key="NullToStatusConverter"/>
+        <converters:DateTimeToReadableConverter x:Key="DateTimeToReadableConverter"/>
+        <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+        <converters:InverseNullToVisibilityConverter x:Key="InverseNullToVisibilityConverter"/>
+
+        <Style x:Key="DetailLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#495057"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <Style x:Key="DetailValueStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#212529"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+
+        <Style x:Key="SectionHeaderStyle" TargetType="Border">
+            <Setter Property="Background" Value="#E9ECEF"/>
+            <Setter Property="BorderBrush" Value="#DEE2E6"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="Padding" Value="15,10"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#1976D2" Padding="20,15">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Text="👤" FontSize="20" Margin="0,0,10,0"
+                           VerticalAlignment="Center"/>
+
+                <StackPanel Grid.Column="1">
+                    <TextBlock Text="{Binding User.FullName}" FontSize="18" 
+                               FontWeight="Bold" Foreground="White"/>
+                    <TextBlock Text="{Binding User.Username}" FontSize="13" 
+                               Foreground="#E3F2FD" Margin="0,2,0,0"/>
+                </StackPanel>
+
+                <Border Grid.Column="2" Background="White" CornerRadius="12" 
+                        Padding="8,4" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding User.Role}" FontSize="11" 
+                               FontWeight="Bold" Foreground="#1976D2"/>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- User Details Content -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0">
+            <StackPanel Margin="20">
+
+                <!-- Basic Information Section -->
+                <Border Style="{StaticResource SectionHeaderStyle}">
+                    <TextBlock Text="Basic Information" FontSize="14" 
+                               FontWeight="Bold" Foreground="#495057"/>
+                </Border>
+
+                <Grid Margin="0,15,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="150"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- User ID -->
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="User ID:" 
+                               Style="{StaticResource DetailLabelStyle}"/>
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding User.AccId}" 
+                               Style="{StaticResource DetailValueStyle}" FontWeight="SemiBold"/>
+
+                    <!-- Email -->
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Email Address:" 
+                               Style="{StaticResource DetailLabelStyle}" Margin="0,10,0,0"/>
+                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding User.Email}" 
+                               Style="{StaticResource DetailValueStyle}" Margin="0,10,0,0"/>
+
+                    <!-- Phone -->
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Phone Number:" 
+                               Style="{StaticResource DetailLabelStyle}" Margin="0,10,0,0"/>
+                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding User.PhoneNumber}" 
+                               Style="{StaticResource DetailValueStyle}" Margin="0,10,0,0"/>
+
+                    <!-- Role -->
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="User Role:" 
+                               Style="{StaticResource DetailLabelStyle}" Margin="0,10,0,0"/>
+                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding User.Role}" 
+                               Style="{StaticResource DetailValueStyle}" Margin="0,10,0,0"/>
+
+                    <!-- Status -->
+                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Account Status:" 
+                               Style="{StaticResource DetailLabelStyle}" Margin="0,10,0,0"/>
+                    <TextBlock Grid.Row="4" Grid.Column="1" Style="{StaticResource DetailValueStyle}" Margin="0,10,0,0">
+                        <TextBlock.Text>
+                            <Binding Path="User.UpdatedAt" Converter="{StaticResource NullToStatusConverter}"/>
+                        </TextBlock.Text>
+                    </TextBlock>
+                </Grid>
+
+                <!-- Account Timeline Section -->
+                <Border Style="{StaticResource SectionHeaderStyle}" Margin="0,25,0,0">
+                    <TextBlock Text="Account Timeline" FontSize="14" 
+                               FontWeight="Bold" Foreground="#495057"/>
+                </Border>
+
+                <Grid Margin="0,15,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="150"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Created Date -->
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Account Created:" 
+                               Style="{StaticResource DetailLabelStyle}"/>
+                    <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal">
+                        <TextBlock Text="{Binding User.CreatedAt, StringFormat='MM/dd/yyyy'}" 
+                                   Style="{StaticResource DetailValueStyle}"/>
+                        <TextBlock Text=" at " Style="{StaticResource DetailValueStyle}" Margin="5,0,5,0"/>
+                        <TextBlock Text="{Binding User.CreatedAt, StringFormat='hh:mm tt'}" 
+                                   Style="{StaticResource DetailValueStyle}"/>
+                    </StackPanel>
+
+                    <!-- Last Updated -->
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Last Updated:" 
+                               Style="{StaticResource DetailLabelStyle}" Margin="0,10,0,0"/>
+                    <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="0,10,0,0">
+                        <TextBlock Text="{Binding User.UpdatedAt, StringFormat='MM/dd/yyyy'}" 
+                                   Style="{StaticResource DetailValueStyle}"/>
+                        <TextBlock Text=" at " Style="{StaticResource DetailValueStyle}" 
+                                   Margin="5,0,5,0" Visibility="{Binding User.UpdatedAt, 
+                                   Converter={StaticResource NullToVisibilityConverter}}"/>
+                        <TextBlock Text="{Binding User.UpdatedAt, StringFormat='hh:mm tt'}" 
+                                   Style="{StaticResource DetailValueStyle}"
+                                   Visibility="{Binding User.UpdatedAt, 
+                                   Converter={StaticResource NullToVisibilityConverter}}"/>
+                        <TextBlock Text="Never updated" Style="{StaticResource DetailValueStyle}" 
+                                   Foreground="#6C757D" FontStyle="Italic"
+                                   Visibility="{Binding User.UpdatedAt, 
+                                   Converter={StaticResource InverseNullToVisibilityConverter}}"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Additional Information Section -->
+                <Border Style="{StaticResource SectionHeaderStyle}" Margin="0,25,0,0">
+                    <TextBlock Text="Additional Information" FontSize="14" 
+                               FontWeight="Bold" Foreground="#495057"/>
+                </Border>
+
+                <StackPanel Margin="0,15,0,0">
+                    <TextBlock Text="User Permissions &amp; Access" FontWeight="SemiBold" 
+                               Foreground="#495057" Margin="0,0,0,8"/>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                        <TextBlock Text="•" Foreground="#1976D2" Margin="0,0,5,0"/>
+                        <TextBlock Text="View operational data and reports" 
+                                   Style="{StaticResource DetailValueStyle}"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                        <TextBlock Text="•" Foreground="#1976D2" Margin="0,0,5,0"/>
+                        <TextBlock Text="Manage assigned mining operations" 
+                                   Style="{StaticResource DetailValueStyle}"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                        <TextBlock Text="•" Foreground="#1976D2" Margin="0,0,5,0"/>
+                        <TextBlock Text="Access system according to role privileges" 
+                                   Style="{StaticResource DetailValueStyle}"/>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Action Buttons -->
+        <Border Grid.Row="2" Background="White" BorderBrush="#E9ECEF" BorderThickness="0,1,0,0" 
+                Padding="20,15">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="✏️ Edit User" Background="Transparent" Foreground="#1976D2" 
+                        BorderBrush="#1976D2" BorderThickness="1" Padding="15,8"
+                        FontSize="13" FontWeight="SemiBold" Cursor="Hand"
+                        Command="{Binding EditUserCommand}" Margin="0,0,10,0"/>
+                <Button Content="Close" Background="#6C757D" Foreground="White" 
+                        BorderThickness="0" Padding="20,10" FontSize="13"
+                        Cursor="Hand" Click="CloseButton_Click"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

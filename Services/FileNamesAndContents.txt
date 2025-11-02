@@ -1,0 +1,2525 @@
+ 
+=============================================================== 
+File: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Services\AuthenticationService.cs 
+=============================================================== 
+﻿using MiningOps.Models.Entities;
+using System.Diagnostics;
+
+namespace MiningOps.Services
+{
+    public interface IAuthenticationService
+    {
+        Task<bool> LoginAsync(string username, string password);
+        void Logout();
+        RegisterMining? CurrentUser { get; }
+        bool IsAuthenticated { get; }
+        bool IsInRole(UserRole role);
+        event EventHandler? AuthenticationStateChanged;
+    }
+
+    public class AuthenticationService : IAuthenticationService
+    {
+        private readonly UserService _userService;
+        private RegisterMining? _currentUser;
+
+        public AuthenticationService(UserService userService)
+        {
+            _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+            Debug.WriteLine("🔐 AuthenticationService initialized");
+        }
+
+        public RegisterMining? CurrentUser => _currentUser;
+        public bool IsAuthenticated => _currentUser != null;
+
+        public bool IsInRole(UserRole role)
+        {
+            return _currentUser?.Role == role;
+        }
+
+        public event EventHandler? AuthenticationStateChanged;
+
+        public async Task<bool> LoginAsync(string usernameOrEmail, string password)
+        {
+            try
+            {
+                Debug.WriteLine($"🔐 AuthenticationService: Attempting login for {usernameOrEmail}");
+
+                // Use the updated UserService validation that accepts username or email
+                var isValid = await _userService.ValidateUserAsync(usernameOrEmail, password);
+                Debug.WriteLine($"🔐 AuthenticationService: User validation result: {isValid}");
+
+                if (isValid)
+                {
+                    var user = await _userService.GetUserByUsernameOrEmailAsync(usernameOrEmail);
+                    Debug.WriteLine($"🔐 AuthenticationService: User retrieved - {(user != null ? "Success" : "Null")}");
+
+                    if (user != null)
+                    {
+                        _currentUser = user;
+                        Debug.WriteLine($"🔐 AuthenticationService: User authenticated - {user.Username}, Email: {user.Email}, Role: {user.Role}, AccId: {user.AccId}");
+
+                        AuthenticationStateChanged?.Invoke(this, EventArgs.Empty);
+                        return true;
+                    }
+                }
+
+                Debug.WriteLine($"🔐 AuthenticationService: Login failed for {usernameOrEmail}");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"💥 AuthenticationService error: {ex.Message}");
+                return false;
+            }
+        }
+
+        public void Logout()
+        {
+            Debug.WriteLine("🔐 AuthenticationService: Logging out");
+            _currentUser = null;
+            AuthenticationStateChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+} 
+=============================================================== 
+File: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Services\DatabaseService.cs 
+=============================================================== 
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using MiningOps.Data;
+using System;
+using System.Threading.Tasks;
+
+namespace MiningOps.Services
+{
+    public class DatabaseService
+    {
+        private readonly IConfiguration _configuration;
+
+        public DatabaseService(IConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+
+        public AppDbContext CreateDbContext()
+        {
+            try
+            {
+                var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
+                var connectionString = _configuration.GetConnectionString("DefaultConnection");
+
+                if (string.IsNullOrEmpty(connectionString))
+                {
+                    throw new InvalidOperationException("Database connection string is null or empty.");
+                }
+
+                optionsBuilder.UseSqlServer(connectionString, options =>
+                {
+                    options.EnableRetryOnFailure(
+                        maxRetryCount: 3,
+                        maxRetryDelay: TimeSpan.FromSeconds(5),
+                        errorNumbersToAdd: null);
+                    options.CommandTimeout(30);
+                });
+
+                return new AppDbContext(optionsBuilder.Options);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to create DbContext: {ex.Message}");
+                throw;
+            }
+        }
+
+        public async Task<bool> TestConnectionAsync()
+        {
+            try
+            {
+                using var context = CreateDbContext();
+                var canConnect = await context.Database.CanConnectAsync();
+
+                if (canConnect)
+                {
+                    System.Diagnostics.Debug.WriteLine("Database connection successful.");
+                    return true;
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("Database connection failed.");
+                    return false;
+                }
+            }
+            catch (Microsoft.Data.SqlClient.SqlException sqlEx)
+            {
+                System.Diagnostics.Debug.WriteLine($"SQL Connection Error: {sqlEx.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error Number: {sqlEx.Number}");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Database connection test failed: {ex.Message}");
+                return false;
+            }
+        }
+
+        // NEW: Safe execution wrapper for all database operations
+        public async Task<T> ExecuteSafeAsync<T>(Func<AppDbContext, Task<T>> operation, T defaultValue = default(T))
+        {
+            try
+            {
+                using var context = CreateDbContext();
+                return await operation(context);
+            }
+            catch (Microsoft.Data.SqlClient.SqlException sqlEx)
+            {
+                System.Diagnostics.Debug.WriteLine($"SQL Error in ExecuteSafeAsync: {sqlEx.Message}");
+                return defaultValue;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Database operation failed in ExecuteSafeAsync: {ex.Message}");
+                return defaultValue;
+            }
+        }
+    }
+} 
+=============================================================== 
+File: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Services\FileNamesAndContents.txt 
+=============================================================== 
+ 
+=============================================================== 
+File: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Services\AuthenticationService.cs 
+=============================================================== 
+﻿using MiningOps.Models.Entities;
+using System.Diagnostics;
+
+namespace MiningOps.Services
+{
+    public interface IAuthenticationService
+    {
+        Task<bool> LoginAsync(string username, string password);
+        void Logout();
+        RegisterMining? CurrentUser { get; }
+        bool IsAuthenticated { get; }
+        bool IsInRole(UserRole role);
+        event EventHandler? AuthenticationStateChanged;
+    }
+
+    public class AuthenticationService : IAuthenticationService
+    {
+        private readonly UserService _userService;
+        private RegisterMining? _currentUser;
+
+        public AuthenticationService(UserService userService)
+        {
+            _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+            Debug.WriteLine("🔐 AuthenticationService initialized");
+        }
+
+        public RegisterMining? CurrentUser => _currentUser;
+        public bool IsAuthenticated => _currentUser != null;
+
+        public bool IsInRole(UserRole role)
+        {
+            return _currentUser?.Role == role;
+        }
+
+        public event EventHandler? AuthenticationStateChanged;
+
+        public async Task<bool> LoginAsync(string usernameOrEmail, string password)
+        {
+            try
+            {
+                Debug.WriteLine($"🔐 AuthenticationService: Attempting login for {usernameOrEmail}");
+
+                // Use the updated UserService validation that accepts username or email
+                var isValid = await _userService.ValidateUserAsync(usernameOrEmail, password);
+                Debug.WriteLine($"🔐 AuthenticationService: User validation result: {isValid}");
+
+                if (isValid)
+                {
+                    var user = await _userService.GetUserByUsernameOrEmailAsync(usernameOrEmail);
+                    Debug.WriteLine($"🔐 AuthenticationService: User retrieved - {(user != null ? "Success" : "Null")}");
+
+                    if (user != null)
+                    {
+                        _currentUser = user;
+                        Debug.WriteLine($"🔐 AuthenticationService: User authenticated - {user.Username}, Email: {user.Email}, Role: {user.Role}, AccId: {user.AccId}");
+
+                        AuthenticationStateChanged?.Invoke(this, EventArgs.Empty);
+                        return true;
+                    }
+                }
+
+                Debug.WriteLine($"🔐 AuthenticationService: Login failed for {usernameOrEmail}");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"💥 AuthenticationService error: {ex.Message}");
+                return false;
+            }
+        }
+
+        public void Logout()
+        {
+            Debug.WriteLine("🔐 AuthenticationService: Logging out");
+            _currentUser = null;
+            AuthenticationStateChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+} 
+=============================================================== 
+File: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Services\DatabaseService.cs 
+=============================================================== 
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using MiningOps.Data;
+using System;
+using System.Threading.Tasks;
+
+namespace MiningOps.Services
+{
+    public class DatabaseService
+    {
+        private readonly IConfiguration _configuration;
+
+        public DatabaseService(IConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+
+        public AppDbContext CreateDbContext()
+        {
+            try
+            {
+                var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
+                var connectionString = _configuration.GetConnectionString("DefaultConnection");
+
+                if (string.IsNullOrEmpty(connectionString))
+                {
+                    throw new InvalidOperationException("Database connection string is null or empty.");
+                }
+
+                optionsBuilder.UseSqlServer(connectionString, options =>
+                {
+                    options.EnableRetryOnFailure(
+                        maxRetryCount: 3,
+                        maxRetryDelay: TimeSpan.FromSeconds(5),
+                        errorNumbersToAdd: null);
+                    options.CommandTimeout(30);
+                });
+
+                return new AppDbContext(optionsBuilder.Options);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to create DbContext: {ex.Message}");
+                throw;
+            }
+        }
+
+        public async Task<bool> TestConnectionAsync()
+        {
+            try
+            {
+                using var context = CreateDbContext();
+                var canConnect = await context.Database.CanConnectAsync();
+
+                if (canConnect)
+                {
+                    System.Diagnostics.Debug.WriteLine("Database connection successful.");
+                    return true;
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("Database connection failed.");
+                    return false;
+                }
+            }
+            catch (Microsoft.Data.SqlClient.SqlException sqlEx)
+            {
+                System.Diagnostics.Debug.WriteLine($"SQL Connection Error: {sqlEx.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error Number: {sqlEx.Number}");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Database connection test failed: {ex.Message}");
+                return false;
+            }
+        }
+
+        // NEW: Safe execution wrapper for all database operations
+        public async Task<T> ExecuteSafeAsync<T>(Func<AppDbContext, Task<T>> operation, T defaultValue = default(T))
+        {
+            try
+            {
+                using var context = CreateDbContext();
+                return await operation(context);
+            }
+            catch (Microsoft.Data.SqlClient.SqlException sqlEx)
+            {
+                System.Diagnostics.Debug.WriteLine($"SQL Error in ExecuteSafeAsync: {sqlEx.Message}");
+                return defaultValue;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Database operation failed in ExecuteSafeAsync: {ex.Message}");
+                return defaultValue;
+            }
+        }
+    }
+} 
+=============================================================== 
+File: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Services\FileNamesAndContents.txt 
+=============================================================== 
+ 
+=============================================================== 
+File: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Services\AuthenticationService.cs 
+=============================================================== 
+﻿using MiningOps.Models.Entities;
+using System.Diagnostics;
+
+namespace MiningOps.Services
+{
+    public interface IAuthenticationService
+    {
+        Task<bool> LoginAsync(string username, string password);
+        void Logo 
+=============================================================== 
+File: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Services\InventoryService.cs 
+=============================================================== 
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using MiningOps.Data;
+using MiningOps.Models.Entities;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace MiningOps.Services
+{
+    public class InventoryService
+    {
+        private readonly DatabaseService _dbService;
+
+        public InventoryService(IConfiguration configuration)
+        {
+            _dbService = new DatabaseService(configuration);
+        }
+
+        // CREATE
+        public async Task<InventoryItem> CreateItemAsync(InventoryItem item)
+        {
+            using var context = _dbService.CreateDbContext();
+
+            if (context == null)
+                throw new System.Exception("Database context is null");
+
+            // UPDATED: Use LastUpdated instead of CreatedAt/UpdatedAt
+            item.LastUpdated = System.DateTime.UtcNow;
+
+            context.InventoryDb.Add(item);
+            await context.SaveChangesAsync();
+            return item;
+        }
+
+        // READ - All items
+        public async Task<List<InventoryItem>> GetAllItemsAsync()
+        {
+            using var context = _dbService.CreateDbContext();
+
+            if (context == null)
+                return new List<InventoryItem>();
+
+            try
+            {
+                var items = await context.InventoryDb
+                    .Include(i => i.Warehouse)
+                    .ToListAsync();
+
+                // REMOVED: Null handling since fields are now non-nullable
+                Debug.WriteLine($"✅ InventoryService: Loaded {items?.Count ?? 0} items");
+                return items ?? new List<InventoryItem>();
+            }
+            catch (System.Exception ex)
+            {
+                Debug.WriteLine($"❌ InventoryService.GetAllItemsAsync failed: {ex.Message}");
+                return new List<InventoryItem>();
+            }
+        }
+
+        // READ - Single item
+        public async Task<InventoryItem> GetItemByIdAsync(int id)
+        {
+            using var context = _dbService.CreateDbContext();
+
+            if (context == null)
+                return null;
+
+            try
+            {
+                var item = await context.InventoryDb
+                    .Include(i => i.Warehouse)
+                    .FirstOrDefaultAsync(i => i.InventoryId == id);
+
+                // REMOVED: Null value handling
+                return item;
+            }
+            catch (System.Exception ex)
+            {
+                Debug.WriteLine($"❌ InventoryService.GetItemByIdAsync failed: {ex.Message}");
+                return null;
+            }
+        }
+
+        // READ - Low stock items
+        public async Task<List<InventoryItem>> GetLowStockItemsAsync()
+        {
+            using var context = _dbService.CreateDbContext();
+
+            if (context == null)
+                return new List<InventoryItem>();
+
+            try
+            {
+                var lowStockItems = await context.InventoryDb
+                    .Include(i => i.Warehouse)
+                    .Where(i => i.Quantity <= i.ReorderLevel) // UPDATED: No null handling needed
+                    .ToListAsync();
+
+                // REMOVED: Null value handling
+                Debug.WriteLine($"✅ InventoryService: Loaded {lowStockItems?.Count ?? 0} low stock items");
+                return lowStockItems ?? new List<InventoryItem>();
+            }
+            catch (System.Exception ex)
+            {
+                Debug.WriteLine($"❌ InventoryService.GetLowStockItemsAsync failed: {ex.Message}");
+                return new List<InventoryItem>();
+            }
+        }
+
+        // UPDATE
+        public async Task<InventoryItem> UpdateItemAsync(InventoryItem item)
+        {
+            using var context = _dbService.CreateDbContext();
+
+            if (context == null)
+                throw new System.Exception("Database context is null");
+
+            // UPDATED: Use LastUpdated instead of UpdatedAt
+            item.LastUpdated = System.DateTime.UtcNow;
+
+            context.InventoryDb.Update(item);
+            await context.SaveChangesAsync();
+            return item;
+        }
+
+        // DELETE
+        public async Task<bool> DeleteItemAsync(int id)
+        {
+            using var context = _dbService.CreateDbContext();
+
+            if (context == null)
+                return false;
+
+            var item = await context.InventoryDb.FindAsync(id);
+            if (item != null)
+            {
+                context.InventoryDb.Remove(item);
+                await context.SaveChangesAsync();
+                return true;
+            }
+            return false;
+        }
+
+        // Additional business logic methods
+        public async Task<bool> UpdateStockQuantityAsync(int itemId, int newQuantity)
+        {
+            using var context = _dbService.CreateDbContext();
+
+            if (context == null)
+                return false;
+
+            var item = await context.InventoryDb.FindAsync(itemId);
+            if (item != null)
+            {
+                item.Quantity = newQuantity;
+                item.LastUpdated = System.DateTime.UtcNow; // UPDATED
+                await context.SaveChangesAsync();
+                return true;
+            }
+            return false;
+        }
+
+        public async Task<bool> AdjustStockAsync(int itemId, int quantityChange)
+        {
+            using var context = _dbService.CreateDbContext();
+
+            if (context == null)
+                return false;
+
+            var item = await context.InventoryDb.FindAsync(itemId);
+            if (item != null)
+            {
+                item.Quantity += quantityChange; // UPDATED: No null handling needed
+                item.LastUpdated = System.DateTime.UtcNow; // UPDATED
+                await context.SaveChangesAsync();
+                return true;
+            }
+            return false;
+        }
+    }
+} 
+=============================================================== 
+File: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Services\InvoiceService.cs 
+=============================================================== 
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using MiningOps.Data;
+using MiningOps.Models.Entities;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace MiningOps.Services
+{
+    public class InvoiceService
+    {
+        private readonly DatabaseService _dbService;
+
+        public InvoiceService(IConfiguration configuration)
+        {
+            _dbService = new DatabaseService(configuration);
+        }
+
+        public async Task<List<Invoice>> GetAllInvoicesAsync()
+        {
+            return await _dbService.ExecuteSafeAsync(async context =>
+            {
+                try
+                {
+                    // PHASE 1: Try EF Core with safe entity mapping first
+                    var invoices = await context.InvoicesDb
+                        .Include(i => i.Order)
+                        .ThenInclude(o => o.Supplier)
+                        .ThenInclude(s => s.RegisterMining)
+                        .Include(i => i.Order)
+                        .ThenInclude(o => o.Requester)
+                        .AsNoTracking()
+                        .ToListAsync();
+
+                    // Apply null safety to each invoice
+                    foreach (var invoice in invoices)
+                    {
+                        EnsureInvoiceNullSafety(invoice);
+                    }
+
+                    Debug.WriteLine($"✅ EF Core loading successful: {invoices.Count} invoices");
+                    return invoices;
+                }
+                catch (Exception efEx)
+                {
+                    Debug.WriteLine($"⚠️ EF Core failed, falling back to raw SQL: {efEx.Message}");
+
+                    // PHASE 2: Fallback to safe raw SQL
+                    return await LoadInvoicesWithSafeRawSql(context);
+                }
+            }, new List<Invoice>());
+        }
+
+        private async Task<List<Invoice>> LoadInvoicesWithSafeRawSql(AppDbContext context)
+        {
+            try
+            {
+                // ✅ SAFE: Parameter-less raw SQL (no injection risk)
+                var sql = @"
+                SELECT 
+                    InvoiceId,
+                    OrderId,
+                    InvoiceDate,
+                    ISNULL(DueDate, GETUTCDATE()) as DueDate,
+                    ISNULL(Amount, 0) as Amount,
+                    ISNULL(Status, 0) as Status,
+                    ISNULL(InvoiceReference, 'REF-' + CONVERT(VARCHAR, InvoiceId)) as InvoiceReference,
+                    ISNULL(InvoiceFilePath, '') as InvoiceFilePath
+                FROM InvoicesDb";
+
+                var invoices = await context.InvoicesDb
+                    .FromSqlRaw(sql)
+                    .AsNoTracking()
+                    .ToListAsync();
+
+                // Apply null safety
+                foreach (var invoice in invoices)
+                {
+                    EnsureInvoiceNullSafety(invoice);
+                }
+
+                Debug.WriteLine($"✅ Raw SQL fallback successful: {invoices.Count} invoices");
+                return invoices;
+            }
+            catch (Exception sqlEx)
+            {
+                Debug.WriteLine($"❌ Raw SQL fallback also failed: {sqlEx.Message}");
+                return new List<Invoice>();
+            }
+        }
+        public async Task<bool> UpdateInvoiceStatusAsync(int invoiceId, InvoiceStatus newStatus)
+        {
+            return await _dbService.ExecuteSafeAsync(async context =>
+            {
+                try
+                {
+                    var invoice = await context.InvoicesDb.FindAsync(invoiceId);
+                    if (invoice != null)
+                    {
+                        invoice.Status = newStatus;
+                        await context.SaveChangesAsync();
+                        Debug.WriteLine($"✅ InvoiceService: Updated invoice {invoiceId} status to {newStatus}");
+                        return true;
+                    }
+                    Debug.WriteLine($"⚠️ InvoiceService: Invoice {invoiceId} not found for status update");
+                    return false;
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"❌ Error updating invoice status {invoiceId}: {ex.Message}");
+                    throw new Exception($"Failed to update invoice status {invoiceId}: {ex.Message}", ex);
+                }
+            }, false);
+        }
+        private void EnsureInvoiceNullSafety(Invoice invoice)
+        {
+            // Ensure all properties have safe values
+            invoice.DueDate = invoice.DueDate ?? DateTime.UtcNow.AddDays(30);
+            invoice.Amount = invoice.Amount ?? 0m;
+            invoice.Status = invoice.Status ?? InvoiceStatus.Unpaid;
+            invoice.InvoiceReference = invoice.InvoiceReference ?? $"INV-{invoice.InvoiceId:D6}";
+            invoice.InvoiceFilePath = invoice.InvoiceFilePath ?? string.Empty;
+        }
+
+        // Enhanced individual methods using the safe execution pattern
+        public async Task<Invoice> GetInvoiceByIdAsync(int id)
+        {
+            return await _dbService.ExecuteSafeAsync(async context =>
+            {
+                var invoice = await context.InvoicesDb
+                    .Include(i => i.Order)
+                    .ThenInclude(o => o.Supplier)
+                    .FirstOrDefaultAsync(i => i.InvoiceId == id);
+
+                if (invoice != null)
+                {
+                    EnsureInvoiceNullSafety(invoice);
+                }
+
+                return invoice;
+            });
+        }
+
+        public async Task<List<Invoice>> GetOverdueInvoicesAsync()
+        {
+            return await _dbService.ExecuteSafeAsync(async context =>
+            {
+                var overdueInvoices = await context.InvoicesDb
+                    .Where(i => i.DueDate < DateTime.UtcNow &&
+                               (i.Status == InvoiceStatus.Unpaid || i.Status == InvoiceStatus.Partial))
+                    .Include(i => i.Order)
+                    .ThenInclude(o => o.Supplier)
+                    .AsNoTracking()
+                    .ToListAsync();
+
+                foreach (var invoice in overdueInvoices)
+                {
+                    EnsureInvoiceNullSafety(invoice);
+                }
+
+                return overdueInvoices;
+            }, new List<Invoice>());
+        }
+
+        // CRUD operations with enhanced error handling
+        public async Task<Invoice> CreateInvoiceAsync(Invoice invoice)
+        {
+            using var context = _dbService.CreateDbContext();
+
+            try
+            {
+                // Ensure required fields before saving
+                invoice.InvoiceDate = DateTime.UtcNow;
+                invoice.Amount = invoice.Amount ?? 0m;
+                invoice.Status = invoice.Status ?? InvoiceStatus.Unpaid;
+                invoice.InvoiceReference = invoice.InvoiceReference ??
+                    $"INV-{DateTime.UtcNow:yyyyMMdd-HHmmss}";
+
+                context.InvoicesDb.Add(invoice);
+                await context.SaveChangesAsync();
+                return invoice;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Error creating invoice: {ex.Message}");
+                throw new Exception($"Failed to create invoice: {ex.Message}", ex);
+            }
+        }
+
+        // Status mapping for web app compatibility
+        private InvoiceStatus MapWebAppStatus(int webAppStatus)
+        {
+            // Map web app status to your WPF enum
+            return webAppStatus switch
+            {
+                0 => InvoiceStatus.Unpaid,      // Web: Unpaid
+                1 => InvoiceStatus.Paid,        // Web: Paid
+                2 => InvoiceStatus.Overdue,     // Web: Overdue  
+                3 => InvoiceStatus.Partial,     // Web: PartiallyPaid
+                _ => InvoiceStatus.Unpaid
+            };
+        }
+
+        private int MapToWebAppStatus(InvoiceStatus wpfStatus)
+        {
+            // Map your WPF enum to web app status
+            return wpfStatus switch
+            {
+                InvoiceStatus.Unpaid => 0,
+                InvoiceStatus.Paid => 1,
+                InvoiceStatus.Overdue => 2,
+                InvoiceStatus.Partial => 3,
+                _ => 0
+            };
+        }
+    }
+} 
+=============================================================== 
+File: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Services\NotificationService.cs 
+=============================================================== 
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Diagnostics;
+using MiningOps.Models.Entities;
+
+namespace MiningOps.Services
+{
+    public interface INotificationService
+    {
+        Task<List<Notification>> GetNotificationsForUserAsync(UserRole userRole, int userId);
+        Task<List<Notification>> GetAllNotificationsForUserAsync(UserRole userRole, int userId);
+        Task AddNotificationAsync(Notification notification);
+        Task MarkAsReadAsync(int notificationId);
+        Task MarkAllAsReadAsync(int userId);
+        Task<int> GetUnreadCountAsync(UserRole userRole, int userId);
+        Task<bool> DeleteNotificationAsync(int notificationId);
+        Task ClearAllNotificationsAsync(UserRole userRole, int userId);
+    }
+
+    public class NotificationService : INotificationService
+    {
+        private readonly List<Notification> _notifications;
+        private int _nextId = 1;
+
+        public NotificationService()
+        {
+            _notifications = new List<Notification>();
+            InitializeSampleNotifications();
+        }
+
+        private void InitializeSampleNotifications()
+        {
+            // Sample notifications for different roles
+            _notifications.AddRange(new[]
+            {
+                // Admin notifications
+                new Notification
+                {
+                    NotificationId = _nextId++,
+                    Title = "New Material Request",
+                    Message = "Supervisor John submitted a new material request for mining equipment",
+                    Type = NotificationType.NewRequest,
+                    Priority = NotificationPriority.Medium,
+                    IsRead = false,
+                    CreatedAt = DateTime.UtcNow.AddHours(-1),
+                    RelatedEntityId = 101,
+                    RelatedEntityType = "Request",
+                    TargetRole = UserRole.Admin
+                },
+                new Notification
+                {
+                    NotificationId = _nextId++,
+                    Title = "Payment Received",
+                    Message = "Payment of $5,000 received from Municipal Corp for invoice #INV-2024-001",
+                    Type = NotificationType.PaymentReceived,
+                    Priority = NotificationPriority.Medium,
+                    IsRead = false,
+                    CreatedAt = DateTime.UtcNow.AddHours(-2),
+                    RelatedEntityId = 201,
+                    RelatedEntityType = "Payment",
+                    TargetRole = UserRole.Admin
+                },
+                new Notification
+                {
+                    NotificationId = _nextId++,
+                    Title = "System Maintenance",
+                    Message = "Scheduled system maintenance this weekend from 10 PM to 2 AM",
+                    Type = NotificationType.SystemAlert,
+                    Priority = NotificationPriority.Low,
+                    IsRead = true,
+                    CreatedAt = DateTime.UtcNow.AddDays(-1),
+                    RelatedEntityId = null,
+                    RelatedEntityType = "System",
+                    TargetRole = UserRole.Admin
+                },
+
+                // Supervisor notifications
+                new Notification
+                {
+                    NotificationId = _nextId++,
+                    Title = "Order Status Updated",
+                    Message = "Order #ORD-2024-015 has been dispatched by Mining Supplies Inc.",
+                    Type = NotificationType.OrderStatusChange,
+                    Priority = NotificationPriority.Medium,
+                    IsRead = false,
+                    CreatedAt = DateTime.UtcNow.AddHours(-3),
+                    RelatedEntityId = 301,
+                    RelatedEntityType = "Order",
+                    TargetRole = UserRole.Supervisor
+                },
+                new Notification
+                {
+                    NotificationId = _nextId++,
+                    Title = "Low Inventory Alert",
+                    Message = "Safety helmets are running low (only 15 remaining)",
+                    Type = NotificationType.LowInventory,
+                    Priority = NotificationPriority.High,
+                    IsRead = false,
+                    CreatedAt = DateTime.UtcNow.AddHours(-4),
+                    RelatedEntityId = 401,
+                    RelatedEntityType = "Inventory",
+                    TargetRole = UserRole.Supervisor
+                },
+                new Notification
+                {
+                    NotificationId = _nextId++,
+                    Title = "Weekly Report Ready",
+                    Message = "Weekly inventory report has been generated and is ready for review",
+                    Type = NotificationType.SystemAlert,
+                    Priority = NotificationPriority.Low,
+                    IsRead = true,
+                    CreatedAt = DateTime.UtcNow.AddDays(-2),
+                    RelatedEntityId = 402,
+                    RelatedEntityType = "Report",
+                    TargetRole = UserRole.Supervisor
+                },
+
+                // Supplier notifications
+                new Notification
+                {
+                    NotificationId = _nextId++,
+                    Title = "New Purchase Order",
+                    Message = "New order received from Mining Corp for 50 safety helmets",
+                    Type = NotificationType.NewOrder,
+                    Priority = NotificationPriority.High,
+                    IsRead = false,
+                    CreatedAt = DateTime.UtcNow.AddHours(-5),
+                    RelatedEntityId = 501,
+                    RelatedEntityType = "Order",
+                    TargetRole = UserRole.Supplier
+                },
+                new Notification
+                {
+                    NotificationId = _nextId++,
+                    Title = "Order #ORD-2024-012 Status",
+                    Message = "Order has been approved and ready for processing",
+                    Type = NotificationType.OrderStatusChange,
+                    Priority = NotificationPriority.Medium,
+                    IsRead = true,
+                    CreatedAt = DateTime.UtcNow.AddHours(-6),
+                    RelatedEntityId = 502,
+                    RelatedEntityType = "Order",
+                    TargetRole = UserRole.Supplier
+                },
+                new Notification
+                {
+                    NotificationId = _nextId++,
+                    Title = "Payment Processed",
+                    Message = "Payment for invoice #INV-2024-008 has been processed",
+                    Type = NotificationType.PaymentReceived,
+                    Priority = NotificationPriority.Medium,
+                    IsRead = true,
+                    CreatedAt = DateTime.UtcNow.AddDays(-3),
+                    RelatedEntityId = 503,
+                    RelatedEntityType = "Payment",
+                    TargetRole = UserRole.Supplier
+                }
+            });
+        }
+
+        public async Task<List<Notification>> GetNotificationsForUserAsync(UserRole userRole, int userId)
+        {
+            await Task.Delay(10); // Simulate async operation
+            return _notifications
+                .Where(n => n.TargetRole == userRole)
+                .OrderByDescending(n => n.CreatedAt)
+                .Take(20) // Limit for dropdown
+                .ToList();
+        }
+
+        // NEW: Get all notifications for user (no limit)
+        public async Task<List<Notification>> GetAllNotificationsForUserAsync(UserRole userRole, int userId)
+        {
+            await Task.Delay(10); // Simulate async operation
+            return _notifications
+                .Where(n => n.TargetRole == userRole)
+                .OrderByDescending(n => n.CreatedAt)
+                .ToList();
+        }
+
+        public async Task AddNotificationAsync(Notification notification)
+        {
+            await Task.Delay(10);
+            notification.NotificationId = _nextId++;
+            notification.CreatedAt = DateTime.UtcNow;
+            notification.IsRead = false;
+            _notifications.Add(notification);
+
+            Debug.WriteLine($"🔔 New notification: {notification.Title} for {notification.TargetRole}");
+        }
+
+        public async Task MarkAsReadAsync(int notificationId)
+        {
+            await Task.Delay(10);
+            var notification = _notifications.FirstOrDefault(n => n.NotificationId == notificationId);
+            if (notification != null)
+            {
+                notification.IsRead = true;
+                Debug.WriteLine($"✅ Marked notification {notificationId} as read");
+            }
+        }
+
+        public async Task MarkAllAsReadAsync(int userId)
+        {
+            await Task.Delay(10);
+            var userNotifications = _notifications.Where(n => !n.IsRead).ToList();
+            foreach (var notification in userNotifications)
+            {
+                notification.IsRead = true;
+            }
+            Debug.WriteLine($"✅ Marked all notifications as read");
+        }
+
+        public async Task<int> GetUnreadCountAsync(UserRole userRole, int userId)
+        {
+            await Task.Delay(10);
+            return _notifications.Count(n => n.TargetRole == userRole && !n.IsRead);
+        }
+
+        // NEW: Delete a specific notification
+        public async Task<bool> DeleteNotificationAsync(int notificationId)
+        {
+            await Task.Delay(10);
+            var notification = _notifications.FirstOrDefault(n => n.NotificationId == notificationId);
+            if (notification != null)
+            {
+                _notifications.Remove(notification);
+                Debug.WriteLine($"🗑️ Deleted notification {notificationId}");
+                return true;
+            }
+            return false;
+        }
+
+        // NEW: Clear all notifications for a user
+        public async Task ClearAllNotificationsAsync(UserRole userRole, int userId)
+        {
+            await Task.Delay(10);
+            var userNotifications = _notifications.Where(n => n.TargetRole == userRole).ToList();
+            foreach (var notification in userNotifications)
+            {
+                _notifications.Remove(notification);
+            }
+            Debug.WriteLine($"🗑️ Cleared all notifications for {userRole}");
+        }
+    }
+} 
+=============================================================== 
+File: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Services\OrderService.cs 
+=============================================================== 
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using MiningOps.Data;
+using MiningOps.Models.Entities;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace MiningOps.Services
+{
+    public class OrderService
+    {
+        private readonly DatabaseService _dbService;
+
+        public OrderService(IConfiguration configuration)
+        {
+            _dbService = new DatabaseService(configuration);
+        }
+
+        public async Task<List<PurchaseOrder>> GetAllOrdersAsync()
+        {
+            try
+            {
+                using var context = _dbService.CreateDbContext();
+                var orders = await context.PurchaseOrdersDb
+                    .Include(po => po.Supplier)
+                    .ThenInclude(s => s.RegisterMining)
+                    .Include(po => po.Requester)
+                    .Include(po => po.Items)
+                    .Include(po => po.Invoices)
+                    .ToListAsync() ?? new List<PurchaseOrder>();
+
+                // REMOVED: Null handling since fields are now non-nullable
+                return orders;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ OrderService.GetAllOrdersAsync failed: {ex.Message}");
+                return new List<PurchaseOrder>();
+            }
+        }
+
+        public async Task<PurchaseOrder> GetOrderByIdAsync(int id)
+        {
+            try
+            {
+                using var context = _dbService.CreateDbContext();
+                var order = await context.PurchaseOrdersDb
+                    .Include(po => po.Supplier)
+                    .ThenInclude(s => s.RegisterMining)
+                    .Include(po => po.Requester)
+                    .Include(po => po.Items)
+                    .Include(po => po.Invoices)
+                    .FirstOrDefaultAsync(po => po.OrderId == id);
+
+                // REMOVED: Null handling
+                return order;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ OrderService.GetOrderByIdAsync failed: {ex.Message}");
+                return null;
+            }
+        }
+
+        public async Task<PurchaseOrder> CreateOrderAsync(PurchaseOrder order)
+        {
+            try
+            {
+                using var context = _dbService.CreateDbContext();
+                order.CreatedAt = DateTime.UtcNow;
+                // REMOVED: Safe value assignment
+                context.PurchaseOrdersDb.Add(order);
+                await context.SaveChangesAsync();
+                return order;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ OrderService.CreateOrderAsync failed: {ex.Message}");
+                throw new Exception($"Error creating order: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<PurchaseOrder> UpdateOrderAsync(PurchaseOrder order)
+        {
+            try
+            {
+                using var context = _dbService.CreateDbContext();
+                // REMOVED: Safe value assignment
+                context.PurchaseOrdersDb.Update(order);
+                await context.SaveChangesAsync();
+                return order;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ OrderService.UpdateOrderAsync failed: {ex.Message}");
+                throw new Exception($"Error updating order: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<bool> DeleteOrderAsync(int id)
+        {
+            try
+            {
+                using var context = _dbService.CreateDbContext();
+                var order = await context.PurchaseOrdersDb.FindAsync(id);
+                if (order != null)
+                {
+                    context.PurchaseOrdersDb.Remove(order);
+                    await context.SaveChangesAsync();
+                    return true;
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ OrderService.DeleteOrderAsync failed: {ex.Message}");
+                throw new Exception($"Error deleting order {id}: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<List<PurchaseOrder>> GetOrdersByStatusAsync(OrderStatus status)
+        {
+            try
+            {
+                using var context = _dbService.CreateDbContext();
+                var orders = await context.PurchaseOrdersDb
+                    .Include(po => po.Supplier)
+                    .ThenInclude(s => s.RegisterMining)
+                    .Include(po => po.Requester)
+                    .Where(po => po.Status == status)
+                    .ToListAsync() ?? new List<PurchaseOrder>();
+
+                return orders;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ OrderService.GetOrdersByStatusAsync failed: {ex.Message}");
+                return new List<PurchaseOrder>();
+            }
+        }
+
+        public async Task<List<PurchaseOrder>> GetOrdersBySupplierAsync(int supplierId)
+        {
+            try
+            {
+                using var context = _dbService.CreateDbContext();
+                var orders = await context.PurchaseOrdersDb
+                    .Include(po => po.Supplier)
+                    .ThenInclude(s => s.RegisterMining)
+                    .Include(po => po.Requester)
+                    .Include(po => po.Items)
+                    .Where(po => po.SupplierId == supplierId)
+                    .ToListAsync() ?? new List<PurchaseOrder>();
+
+                return orders;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ OrderService.GetOrdersBySupplierAsync failed: {ex.Message}");
+                return new List<PurchaseOrder>();
+            }
+        }
+
+        public async Task<PurchaseOrder> UpdateOrderStatusAsync(int orderId, OrderStatus newStatus)
+        {
+            try
+            {
+                using var context = _dbService.CreateDbContext();
+                var order = await context.PurchaseOrdersDb.FindAsync(orderId);
+                if (order != null)
+                {
+                    order.Status = newStatus;
+                    await context.SaveChangesAsync();
+                }
+                return order;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ OrderService.UpdateOrderStatusAsync failed: {ex.Message}");
+                throw new Exception($"Error updating order status {orderId}: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<decimal> CalculateOrderTotalAsync(int orderId)
+        {
+            try
+            {
+                using var context = _dbService.CreateDbContext();
+                var order = await context.PurchaseOrdersDb
+                    .Include(po => po.Items)
+                    .FirstOrDefaultAsync(po => po.OrderId == orderId);
+
+                if (order?.Items == null)
+                    return 0m;
+
+                // UPDATED: Direct calculation without safe methods
+                return order.Items.Sum(item => item.Quantity * item.UnitPrice);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ OrderService.CalculateOrderTotalAsync failed: {ex.Message}");
+                return 0m;
+            }
+        }
+
+        public async Task<Invoice> CreateInvoiceFromOrderAsync(int orderId)
+        {
+            try
+            {
+                using var context = _dbService.CreateDbContext();
+
+                var order = await context.PurchaseOrdersDb
+                    .Include(po => po.Supplier)
+                    .Include(po => po.Items)
+                    .FirstOrDefaultAsync(po => po.OrderId == orderId);
+
+                if (order == null)
+                    throw new Exception("Order not found");
+
+                // Check if invoice already exists
+                var existingInvoice = await context.InvoicesDb
+                    .FirstOrDefaultAsync(i => i.OrderId == orderId);
+
+                if (existingInvoice != null)
+                    return existingInvoice;
+
+                // Create new invoice
+                var invoice = new Invoice
+                {
+                    OrderId = orderId,
+                    InvoiceDate = DateTime.UtcNow,
+                    DueDate = DateTime.UtcNow.AddDays(30),
+                    Amount = order.TotalAmount, // UPDATED: Direct assignment
+                    Status = InvoiceStatus.Unpaid,
+                    InvoiceReference = $"INV-{orderId}-{DateTime.UtcNow:yyyyMMdd}"
+                };
+
+                context.InvoicesDb.Add(invoice);
+                await context.SaveChangesAsync();
+
+                return invoice;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ OrderService.CreateInvoiceFromOrderAsync failed: {ex.Message}");
+                throw new Exception($"Error creating invoice for order {orderId}: {ex.Message}", ex);
+            }
+        }
+    }
+} 
+=============================================================== 
+File: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Services\PaymentService.cs 
+=============================================================== 
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using MiningOps.Data;
+using MiningOps.Models.Entities;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace MiningOps.Services
+{
+    public class PaymentService
+    {
+        private readonly DatabaseService _dbService;
+
+        public PaymentService(IConfiguration configuration)
+        {
+            _dbService = new DatabaseService(configuration);
+        }
+
+        public async Task<List<Payment>> GetAllPaymentsAsync()
+        {
+            return await _dbService.ExecuteSafeAsync(async context =>
+            {
+                try
+                {
+                    // Try EF Core first
+                    var payments = await context.PaymentsDb
+                        .Include(p => p.Invoice)
+                        .ThenInclude(i => i.Order)
+                        .Include(p => p.ApprovedBy)
+                        .AsNoTracking()
+                        .ToListAsync();
+
+                    foreach (var payment in payments)
+                    {
+                        EnsurePaymentNullSafety(payment);
+                    }
+
+                    Debug.WriteLine($"✅ PaymentService: Loaded {payments.Count} payments via EF Core");
+                    return payments;
+                }
+                catch (Exception efEx)
+                {
+                    Debug.WriteLine($"⚠️ EF Core failed for payments, using raw SQL: {efEx.Message}");
+                    return await LoadPaymentsWithSafeRawSql(context);
+                }
+            }, new List<Payment>());
+        }
+
+        private async Task<List<Payment>> LoadPaymentsWithSafeRawSql(AppDbContext context)
+        {
+            try
+            {
+                var sql = @"
+                    SELECT 
+                        PaymentId,
+                        InvoiceId,
+                        ISNULL(Amount, 0) as Amount,
+                        ISNULL(PaymentReference, 'PAY-' + CONVERT(VARCHAR, PaymentId)) as PaymentReference,
+                        PaidDate,
+                        ApprovedById
+                    FROM PaymentsDb";
+
+                var payments = await context.PaymentsDb
+                    .FromSqlRaw(sql)
+                    .AsNoTracking()
+                    .ToListAsync();
+
+                foreach (var payment in payments)
+                {
+                    EnsurePaymentNullSafety(payment);
+                }
+
+                Debug.WriteLine($"✅ PaymentService: Loaded {payments.Count} payments via raw SQL");
+                return payments;
+            }
+            catch (Exception sqlEx)
+            {
+                Debug.WriteLine($"❌ Raw SQL for payments failed: {sqlEx.Message}");
+                return new List<Payment>();
+            }
+        }
+
+        private void EnsurePaymentNullSafety(Payment payment)
+        {
+            payment.Amount = payment.Amount ?? 0m;
+            payment.PaymentReference = payment.PaymentReference ?? $"PAY-{payment.PaymentId:D6}";
+            payment.PaidDate = (payment.PaidDate == DateTime.MinValue || payment.PaidDate == default)
+                ? DateTime.UtcNow
+                : payment.PaidDate;
+        }
+
+        public async Task<Payment> GetPaymentByIdAsync(int id)
+        {
+            return await _dbService.ExecuteSafeAsync(async context =>
+            {
+                try
+                {
+                    // Try EF Core first
+                    var payment = await context.PaymentsDb
+                        .Include(p => p.Invoice)
+                        .ThenInclude(i => i.Order)
+                        .Include(p => p.ApprovedBy)
+                        .FirstOrDefaultAsync(p => p.PaymentId == id);
+
+                    if (payment != null)
+                    {
+                        EnsurePaymentNullSafety(payment);
+                    }
+
+                    return payment;
+                }
+                catch (Exception efEx)
+                {
+                    Debug.WriteLine($"⚠️ EF Core failed for GetPaymentById, using raw SQL: {efEx.Message}");
+
+                    // Fallback to raw SQL
+                    var sql = @"
+                        SELECT 
+                            PaymentId,
+                            InvoiceId,
+                            ISNULL(Amount, 0) as Amount,
+                            ISNULL(PaymentReference, 'PAY-' + CONVERT(VARCHAR, PaymentId)) as PaymentReference,
+                            PaidDate,
+                            ApprovedById
+                        FROM PaymentsDb 
+                        WHERE PaymentId = {0}";
+
+                    var payment = await context.PaymentsDb
+                        .FromSqlRaw(sql, id)
+                        .Include(p => p.Invoice)
+                        .Include(p => p.ApprovedBy)
+                        .FirstOrDefaultAsync();
+
+                    if (payment != null)
+                    {
+                        EnsurePaymentNullSafety(payment);
+                    }
+
+                    return payment;
+                }
+            });
+        }
+
+        public async Task<Payment> CreatePaymentAsync(Payment payment)
+        {
+            return await _dbService.ExecuteSafeAsync(async context =>
+            {
+                try
+                {
+                    // Enhanced null safety before saving
+                    payment.PaidDate = DateTime.UtcNow;
+                    payment.Amount = payment.Amount ?? 0m;
+                    payment.PaymentReference = payment.PaymentReference ??
+                        $"PAY-{DateTime.UtcNow:yyyyMMdd-HHmmss}";
+
+                    context.PaymentsDb.Add(payment);
+                    await context.SaveChangesAsync();
+
+                    Debug.WriteLine($"✅ PaymentService: Created payment {payment.PaymentId}");
+                    return payment;
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"❌ Error creating payment: {ex.Message}");
+                    throw new Exception($"Failed to create payment: {ex.Message}", ex);
+                }
+            });
+        }
+
+        public async Task<Payment> UpdatePaymentAsync(Payment payment)
+        {
+            return await _dbService.ExecuteSafeAsync(async context =>
+            {
+                try
+                {
+                    // Ensure null safety before update
+                    EnsurePaymentNullSafety(payment);
+
+                    context.PaymentsDb.Update(payment);
+                    await context.SaveChangesAsync();
+
+                    Debug.WriteLine($"✅ PaymentService: Updated payment {payment.PaymentId}");
+                    return payment;
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"❌ Error updating payment: {ex.Message}");
+                    throw new Exception($"Failed to update payment: {ex.Message}", ex);
+                }
+            });
+        }
+
+        public async Task<bool> DeletePaymentAsync(int id)
+        {
+            return await _dbService.ExecuteSafeAsync(async context =>
+            {
+                try
+                {
+                    var payment = await context.PaymentsDb.FindAsync(id);
+                    if (payment != null)
+                    {
+                        context.PaymentsDb.Remove(payment);
+                        await context.SaveChangesAsync();
+                        Debug.WriteLine($"✅ PaymentService: Deleted payment {id}");
+                        return true;
+                    }
+                    Debug.WriteLine($"⚠️ PaymentService: Payment {id} not found for deletion");
+                    return false;
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"❌ Error deleting payment {id}: {ex.Message}");
+                    throw new Exception($"Failed to delete payment {id}: {ex.Message}", ex);
+                }
+            }, false);
+        }
+
+        public async Task<bool> ApprovePaymentAsync(int paymentId, int approvedById)
+        {
+            return await _dbService.ExecuteSafeAsync(async context =>
+            {
+                try
+                {
+                    var payment = await context.PaymentsDb.FindAsync(paymentId);
+                    if (payment != null)
+                    {
+                        payment.ApprovedById = approvedById;
+                        await context.SaveChangesAsync();
+                        Debug.WriteLine($"✅ PaymentService: Approved payment {paymentId}");
+                        return true;
+                    }
+                    Debug.WriteLine($"⚠️ PaymentService: Payment {paymentId} not found for approval");
+                    return false;
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"❌ Error approving payment {paymentId}: {ex.Message}");
+                    throw new Exception($"Failed to approve payment {paymentId}: {ex.Message}", ex);
+                }
+            }, false);
+        }
+    }
+} 
+=============================================================== 
+File: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Services\RequestService.cs 
+=============================================================== 
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using MiningOps.Data;
+using MiningOps.Models.Entities;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace MiningOps.Services
+{
+    public class RequestService
+    {
+        private readonly DatabaseService _dbService;
+
+        public RequestService(IConfiguration configuration)
+        {
+            _dbService = new DatabaseService(configuration);
+        }
+
+        public async Task<List<MaterialRequest>> GetAllRequestsAsync()
+        {
+            try
+            {
+                using var context = _dbService.CreateDbContext();
+                var requests = await context.MaterialRequestsDb
+                    .Include(mr => mr.PurchaseOrders)
+                    .ThenInclude(po => po.Supplier)
+                    .ToListAsync() ?? new List<MaterialRequest>();
+
+                // REMOVED: Null handling since Quantity is now non-nullable
+                return requests;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ RequestService.GetAllRequestsAsync failed: {ex.Message}");
+                return new List<MaterialRequest>();
+            }
+        }
+
+        public async Task<MaterialRequest> GetRequestByIdAsync(int id)
+        {
+            try
+            {
+                using var context = _dbService.CreateDbContext();
+                var request = await context.MaterialRequestsDb
+                    .Include(mr => mr.PurchaseOrders)
+                    .ThenInclude(po => po.Supplier)
+                    .FirstOrDefaultAsync(mr => mr.MaterialRequestId == id);
+
+                // REMOVED: Null handling
+                return request;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ RequestService.GetRequestByIdAsync failed: {ex.Message}");
+                return null;
+            }
+        }
+
+        public async Task<MaterialRequest> CreateRequestAsync(MaterialRequest request)
+        {
+            try
+            {
+                using var context = _dbService.CreateDbContext();
+                request.RequestDate = DateTime.UtcNow;
+                // REMOVED: Safe value assignment
+                context.MaterialRequestsDb.Add(request);
+                await context.SaveChangesAsync();
+                return request;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ RequestService.CreateRequestAsync failed: {ex.Message}");
+                throw new Exception($"Error creating request: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<MaterialRequest> UpdateRequestAsync(MaterialRequest request)
+        {
+            try
+            {
+                using var context = _dbService.CreateDbContext();
+                // REMOVED: Safe value assignment
+                context.MaterialRequestsDb.Update(request);
+                await context.SaveChangesAsync();
+                return request;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ RequestService.UpdateRequestAsync failed: {ex.Message}");
+                throw new Exception($"Error updating request: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<bool> DeleteRequestAsync(int id)
+        {
+            try
+            {
+                using var context = _dbService.CreateDbContext();
+                var request = await context.MaterialRequestsDb.FindAsync(id);
+                if (request != null)
+                {
+                    context.MaterialRequestsDb.Remove(request);
+                    await context.SaveChangesAsync();
+                    return true;
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ RequestService.DeleteRequestAsync failed: {ex.Message}");
+                throw new Exception($"Error deleting request {id}: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<List<MaterialRequest>> GetRequestsByStatusAsync(string status)
+        {
+            try
+            {
+                using var context = _dbService.CreateDbContext();
+                var requests = await context.MaterialRequestsDb
+                    .Include(mr => mr.PurchaseOrders)
+                    .Where(mr => mr.Status == status)
+                    .ToListAsync() ?? new List<MaterialRequest>();
+
+                return requests;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ RequestService.GetRequestsByStatusAsync failed: {ex.Message}");
+                return new List<MaterialRequest>();
+            }
+        }
+
+        public async Task<bool> ApproveRequestAsync(int requestId)
+        {
+            try
+            {
+                using var context = _dbService.CreateDbContext();
+                var request = await context.MaterialRequestsDb.FindAsync(requestId);
+                if (request != null)
+                {
+                    request.Status = "Approved";
+                    await context.SaveChangesAsync();
+                    return true;
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ RequestService.ApproveRequestAsync failed: {ex.Message}");
+                throw new Exception($"Error approving request {requestId}: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<bool> RejectRequestAsync(int requestId, string notes = null)
+        {
+            try
+            {
+                using var context = _dbService.CreateDbContext();
+                var request = await context.MaterialRequestsDb.FindAsync(requestId);
+                if (request != null)
+                {
+                    request.Status = "Rejected";
+                    await context.SaveChangesAsync();
+                    return true;
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ RequestService.RejectRequestAsync failed: {ex.Message}");
+                throw new Exception($"Error rejecting request {requestId}: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<List<MaterialRequest>> GetPendingRequestsAsync()
+        {
+            return await GetRequestsByStatusAsync("Pending");
+        }
+
+        public async Task<List<MaterialRequest>> GetApprovedRequestsAsync()
+        {
+            return await GetRequestsByStatusAsync("Approved");
+        }
+
+        public async Task<int> GetPendingRequestsCountAsync()
+        {
+            try
+            {
+                using var context = _dbService.CreateDbContext();
+                return await context.MaterialRequestsDb
+                    .CountAsync(mr => mr.Status == "Pending");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ RequestService.GetPendingRequestsCountAsync failed: {ex.Message}");
+                return 0;
+            }
+        }
+    }
+} 
+=============================================================== 
+File: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Services\SeedDataService.cs 
+=============================================================== 
+﻿using Microsoft.Extensions.Configuration;
+using MiningOps.Models.Entities;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using System.Diagnostics;
+using MiningOps.Security;
+
+namespace MiningOps.Services
+{
+    public class SeedDataService
+    {
+        private readonly IConfiguration _configuration;
+        private readonly UserService _userService;
+        private readonly DatabaseService _databaseService;
+
+        public SeedDataService(IConfiguration configuration, UserService userService, DatabaseService databaseService)
+        {
+            _configuration = configuration;
+            _userService = userService;
+            _databaseService = databaseService;
+        }
+
+        public async Task InitializeDatabaseAsync()
+        {
+            try
+            {
+                Debug.WriteLine("🌱 Starting database seeding...");
+
+                // Create demo users
+                await CreateDemoUsersAsync();
+
+                // Test authentication
+                await _userService.TestAuthenticationAsync();
+
+                Debug.WriteLine("✅ Database seeding completed successfully");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"💥 Database seeding failed: {ex.Message}");
+                Debug.WriteLine($"💥 Stack trace: {ex.StackTrace}");
+                // Don't throw, just log - we want the app to start even if seeding fails
+            }
+        }
+
+        private async Task CreateDemoUsersAsync()
+        {
+            var demoUsers = new List<(string username, string password, string fullName, string email, string phone, UserRole role)>
+            {
+                ("admin", "admin123", "System Administrator", "admin@miningops.com", "555-0001", UserRole.Admin),
+                ("supplier1", "supplier123", "Supplier One", "supplier1@miningops.com", "555-0002", UserRole.Supplier),
+                ("supervisor1", "supervisor123", "Supervisor One", "supervisor1@miningops.com", "555-0003", UserRole.Supervisor)
+            };
+
+            foreach (var (username, password, fullName, email, phone, role) in demoUsers)
+            {
+                try
+                {
+                    var existingUser = await _userService.GetUserByUsernameAsync(username);
+                    if (existingUser == null)
+                    {
+                        var newUser = new RegisterMining
+                        {
+                            Username = username,
+                            FullName = fullName,
+                            Email = email,
+                            PhoneNumber = phone,
+                            Salt = PasswordHasher.GenerateSalt(), // ✅ UPDATED: Generate proper salt
+                            Role = role,
+                            CreatedAt = DateTime.UtcNow,
+                            UpdatedAt = null
+                        };
+
+                        // Password will be hashed in CreateUserAsync using SHA256
+                        await _userService.CreateUserAsync(newUser, password);
+                        Debug.WriteLine($"✅ Created user: {username}");
+                    }
+                    else
+                    {
+                        Debug.WriteLine($"ℹ️ User already exists: {username}");
+
+                        // ✅ OPTIONAL: Update existing demo users to use SHA256 hashing
+                        // Uncomment if you want to automatically migrate existing demo users
+                        // await _userService.UpdateUserPasswordAsync(existingUser.AccId, password);
+                        // Debug.WriteLine($"✅ Updated password hashing for: {username}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"⚠️ Error creating user {username}: {ex.Message}");
+                }
+            }
+        }
+    }
+} 
+=============================================================== 
+File: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Services\servicces.bat 
+=============================================================== 
+@echo off
+setlocal enabledelayedexpansion
+
+:: Target directory
+set "targetDir=C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Services"
+
+:: Output file
+set "outputFile=%~dp0FileNamesAndContents.txt"
+
+echo Collecting file names and contents from: %targetDir%
+echo. > "%outputFile%"
+
+for /R "%targetDir%" %%F in (*) do (
+    echo =============================================================== >> "%outputFile%"
+    echo File: %%F >> "%outputFile%"
+    echo =============================================================== >> "%outputFile%"
+    type "%%F" >> "%outputFile%"
+    echo. >> "%outputFile%"
+)
+
+echo.
+echo Done! Results saved to "%outputFile%"
+pause
+ 
+=============================================================== 
+File: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Services\SupplierService.cs 
+=============================================================== 
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using MiningOps.Data;
+using MiningOps.Models.Entities;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace MiningOps.Services
+{
+    public class SupplierService
+    {
+        private readonly DatabaseService _dbService;
+
+        public SupplierService(IConfiguration configuration)
+        {
+            _dbService = new DatabaseService(configuration);
+        }
+
+        public async Task<List<Supplier>> GetAllSuppliersAsync()
+        {
+            using var context = _dbService.CreateDbContext();
+            return await context.SupplierProfiles
+                .Include(s => s.RegisterMining)
+                .ToListAsync();
+        }
+
+        public async Task<Supplier> GetSupplierByIdAsync(int id)
+        {
+            using var context = _dbService.CreateDbContext();
+            return await context.SupplierProfiles
+                .Include(s => s.RegisterMining)
+                .FirstOrDefaultAsync(s => s.SupplierId == id);
+        }
+
+        public async Task<Supplier> GetSupplierByAccountIdAsync(int accId)
+        {
+            using var context = _dbService.CreateDbContext();
+            return await context.SupplierProfiles
+                .Include(s => s.RegisterMining)
+                .FirstOrDefaultAsync(s => s.AccId == accId);
+        }
+
+        public async Task<Supplier> CreateSupplierAsync(Supplier supplier)
+        {
+            using var context = _dbService.CreateDbContext();
+
+            // Verify the user exists and has Supplier role
+            var user = await context.RegisterMiningDb
+                .FirstOrDefaultAsync(u => u.AccId == supplier.AccId);
+
+            if (user == null)
+            {
+                throw new Exception("Selected user does not exist.");
+            }
+
+            // Ensure the user has Supplier role
+            if (user.Role != UserRole.Supplier)
+            {
+                throw new Exception("Selected user must have Supplier role.");
+            }
+
+            // Check if user already has a supplier profile
+            var existingSupplier = await context.SupplierProfiles
+                .FirstOrDefaultAsync(s => s.AccId == supplier.AccId);
+
+            if (existingSupplier != null)
+            {
+                throw new Exception("This user already has a supplier profile.");
+            }
+
+            context.SupplierProfiles.Add(supplier);
+            await context.SaveChangesAsync();
+            return supplier;
+        }
+
+        public async Task<Supplier> UpdateSupplierAsync(Supplier supplier)
+        {
+            using var context = _dbService.CreateDbContext();
+            context.SupplierProfiles.Update(supplier);
+            await context.SaveChangesAsync();
+            return supplier;
+        }
+
+        public async Task<bool> DeleteSupplierAsync(int id)
+        {
+            using var context = _dbService.CreateDbContext();
+            var supplier = await context.SupplierProfiles.FindAsync(id);
+            if (supplier != null)
+            {
+                context.SupplierProfiles.Remove(supplier);
+                await context.SaveChangesAsync();
+                return true;
+            }
+            return false;
+        }
+
+        public async Task<List<Supplier>> GetActiveSuppliersAsync()
+        {
+            using var context = _dbService.CreateDbContext();
+            return await context.SupplierProfiles
+                .Include(s => s.RegisterMining)
+                .Where(s => s.RegisterMining.UpdatedAt == null) // Active suppliers
+                .ToListAsync();
+        }
+    }
+} 
+=============================================================== 
+File: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Services\UserService.cs 
+=============================================================== 
+﻿using Microsoft.Extensions.Configuration;
+using MiningOps.Models.Entities;
+using MiningOps.Data;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using System.Diagnostics;
+using System.Linq;
+using Microsoft.EntityFrameworkCore;
+using MiningOps.Security;
+
+namespace MiningOps.Services
+{
+    public class UserService
+    {
+        private readonly IConfiguration _configuration;
+        private readonly DatabaseService _databaseService;
+
+        public UserService(IConfiguration configuration, DatabaseService databaseService)
+        {
+            _configuration = configuration;
+            _databaseService = databaseService;
+            Debug.WriteLine("👥 UserService initialized with DatabaseService");
+        }
+
+        public async Task<bool> ValidateUserAsync(string usernameOrEmail, string password)
+        {
+            try
+            {
+                Debug.WriteLine($"🔐 Validating user: {usernameOrEmail}");
+
+                var user = await GetUserByUsernameOrEmailAsync(usernameOrEmail);
+                if (user == null)
+                {
+                    Debug.WriteLine($"❌ User not found: {usernameOrEmail}");
+                    return false;
+                }
+
+                // Check if user is active (UpdatedAt is null for active users)
+                if (user.UpdatedAt != null)
+                {
+                    Debug.WriteLine($"❌ User is inactive: {usernameOrEmail}");
+                    return false;
+                }
+
+                // ✅ UPDATED: Use SHA256 hashing to match web app
+                var isValid = PasswordHasher.VerifyPassword(password, user.PasswordHash, user.Salt);
+                Debug.WriteLine($"🔐 Password validation result for {usernameOrEmail}: {isValid}");
+
+                if (isValid)
+                {
+                    Debug.WriteLine($"✅ User {usernameOrEmail} authenticated successfully");
+                }
+                else
+                {
+                    Debug.WriteLine($"❌ Invalid password for user: {usernameOrEmail}");
+                }
+
+                return isValid;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"💥 Error validating user {usernameOrEmail}: {ex.Message}");
+                Debug.WriteLine($"💥 Stack trace: {ex.StackTrace}");
+                return false;
+            }
+        }
+
+        public async Task<RegisterMining?> GetUserByUsernameOrEmailAsync(string usernameOrEmail)
+        {
+            return await _databaseService.ExecuteSafeAsync(async context =>
+            {
+                // Check both username and email (case-insensitive)
+                var user = await context.RegisterMiningDb
+                    .Where(u => (u.Username.ToLower() == usernameOrEmail.ToLower() ||
+                                u.Email.ToLower() == usernameOrEmail.ToLower()) &&
+                                u.UpdatedAt == null) // Only active users
+                    .FirstOrDefaultAsync();
+
+                if (user != null)
+                {
+                    Debug.WriteLine($"✅ Found user: {usernameOrEmail} (Username: {user.Username}, Email: {user.Email}, Role: {user.Role}, AccId: {user.AccId})");
+                }
+                else
+                {
+                    Debug.WriteLine($"❌ User not found: {usernameOrEmail}");
+                }
+
+                return user;
+            });
+        }
+
+        public async Task<RegisterMining?> GetUserByUsernameAsync(string username)
+        {
+            return await _databaseService.ExecuteSafeAsync(async context =>
+            {
+                var user = await context.RegisterMiningDb
+                    .Where(u => u.Username.ToLower() == username.ToLower() &&
+                                u.UpdatedAt == null)
+                    .FirstOrDefaultAsync();
+                return user;
+            });
+        }
+
+        public async Task<RegisterMining?> GetUserByEmailAsync(string email)
+        {
+            return await _databaseService.ExecuteSafeAsync(async context =>
+            {
+                var user = await context.RegisterMiningDb
+                    .Where(u => u.Email.ToLower() == email.ToLower() &&
+                                u.UpdatedAt == null)
+                    .FirstOrDefaultAsync();
+                return user;
+            });
+        }
+
+        public async Task<bool> AdminUserExistsAsync()
+        {
+            return await _databaseService.ExecuteSafeAsync(async context =>
+            {
+                var adminExists = await context.RegisterMiningDb
+                    .AnyAsync(u => u.Role == UserRole.Admin && u.UpdatedAt == null);
+
+                Debug.WriteLine($"🔍 Admin user exists check: {adminExists}");
+                return adminExists;
+            }, false);
+        }
+
+        public async Task<bool> CreateDefaultAdminUserAsync()
+        {
+            try
+            {
+                // Check if admin already exists
+                if (await AdminUserExistsAsync())
+                {
+                    Debug.WriteLine("ℹ️ Admin user already exists, skipping creation");
+                    return true;
+                }
+
+                Debug.WriteLine("👑 Creating default admin user...");
+
+                var adminUser = new RegisterMining
+                {
+                    Username = "admin",
+                    FullName = "System Administrator",
+                    Email = "admin@miningops.com",
+                    PhoneNumber = "555-0001",
+                    Role = UserRole.Admin,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = null
+                };
+
+                await CreateUserAsync(adminUser, "admin123");
+                Debug.WriteLine("✅ Default admin user created successfully");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"💥 Error creating default admin user: {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<bool> RecoverAdminUserAsync()
+        {
+            return await _databaseService.ExecuteSafeAsync(async context =>
+            {
+                try
+                {
+                    // Find any admin user (even if UpdatedAt is set)
+                    var adminUser = await context.RegisterMiningDb
+                        .Where(u => u.Role == UserRole.Admin)
+                        .OrderByDescending(u => u.AccId)
+                        .FirstOrDefaultAsync();
+
+                    if (adminUser != null)
+                    {
+                        // Reset UpdatedAt to null to make it active again
+                        adminUser.UpdatedAt = null;
+
+                        // ✅ UPDATED: Use SHA256 hashing to match web app
+                        adminUser.Salt = PasswordHasher.GenerateSalt();
+                        adminUser.PasswordHash = PasswordHasher.HashPassword("admin123", adminUser.Salt);
+
+                        await context.SaveChangesAsync();
+                        Debug.WriteLine($"✅ Recovered admin user: {adminUser.Username} (AccId: {adminUser.AccId})");
+                        return true;
+                    }
+
+                    Debug.WriteLine("❌ No admin user found to recover");
+                    return false;
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"💥 Error recovering admin user: {ex.Message}");
+                    return false;
+                }
+            }, false);
+        }
+
+        public async Task<Supplier?> GetSupplierByAccIdAsync(int accId)
+        {
+            return await _databaseService.ExecuteSafeAsync(async context =>
+            {
+                var supplier = await context.SupplierProfiles
+                    .FirstOrDefaultAsync(s => s.AccId == accId);
+                return supplier;
+            });
+        }
+
+        public async Task<Supplier?> GetSupplierProfileAsync(int accId)
+        {
+            return await _databaseService.ExecuteSafeAsync(async context =>
+            {
+                var supplier = await context.SupplierProfiles
+                    .FirstOrDefaultAsync(s => s.AccId == accId);
+
+                if (supplier != null)
+                {
+                    Debug.WriteLine($"✅ Found supplier profile for AccId {accId}: {supplier.CompanyName}");
+                }
+                else
+                {
+                    Debug.WriteLine($"❌ No supplier profile found for AccId {accId}");
+                }
+
+                return supplier;
+            });
+        }
+
+        public async Task CreateUserAsync(RegisterMining user, string password)
+        {
+            await _databaseService.ExecuteSafeAsync(async context =>
+            {
+                // ✅ UPDATED: Use SHA256 hashing to match web app
+                user.Salt = PasswordHasher.GenerateSalt();
+                user.PasswordHash = PasswordHasher.HashPassword(password, user.Salt);
+
+                user.CreatedAt = DateTime.UtcNow;
+                user.UpdatedAt = null;
+
+                // Set a default phone number if not provided
+                if (string.IsNullOrEmpty(user.PhoneNumber))
+                {
+                    user.PhoneNumber = "555-0000";
+                }
+
+                // Check if username already exists (using ToLower for case-insensitive check)
+                var existingUsername = await context.RegisterMiningDb
+                    .Where(u => u.Username.ToLower() == user.Username.ToLower())
+                    .FirstOrDefaultAsync();
+
+                if (existingUsername != null)
+                {
+                    Debug.WriteLine($"ℹ️ Username already exists: {user.Username}");
+                    throw new InvalidOperationException($"Username '{user.Username}' already exists.");
+                }
+
+                // Check if email already exists
+                var existingEmail = await context.RegisterMiningDb
+                    .Where(u => u.Email.ToLower() == user.Email.ToLower())
+                    .FirstOrDefaultAsync();
+
+                if (existingEmail != null)
+                {
+                    Debug.WriteLine($"ℹ️ Email already exists: {user.Email}");
+                    throw new InvalidOperationException($"Email '{user.Email}' already exists.");
+                }
+
+                // Prevent multiple admin users
+                if (user.Role == UserRole.Admin)
+                {
+                    var existingAdmin = await context.RegisterMiningDb
+                        .Where(u => u.Role == UserRole.Admin && u.UpdatedAt == null)
+                        .FirstOrDefaultAsync();
+
+                    if (existingAdmin != null)
+                    {
+                        Debug.WriteLine($"❌ Admin user already exists: {existingAdmin.Username}");
+                        throw new InvalidOperationException("An admin user already exists. Only one admin user is allowed.");
+                    }
+                }
+
+                // Add user to database
+                context.RegisterMiningDb.Add(user);
+                await context.SaveChangesAsync();
+
+                Debug.WriteLine($"✅ Created user: {user.Username} (AccId: {user.AccId}, Role: {user.Role})");
+
+                // Create profile based on role
+                if (user.Role == UserRole.Supplier)
+                {
+                    var supplierProfile = new Supplier
+                    {
+                        AccId = user.AccId,
+                        CompanyName = $"{user.FullName} Company",
+                        ContactPerson = user.FullName,
+                        Address = "123 Business St, City, State 12345",
+                        CanViewOrders = true,
+                        CanManageInventory = false
+                    };
+
+                    context.SupplierProfiles.Add(supplierProfile);
+                    Debug.WriteLine($"✅ Created supplier profile for {user.Username}");
+                }
+                else if (user.Role == UserRole.Admin)
+                {
+                    var adminProfile = new Admin
+                    {
+                        AccId = user.AccId,
+                        Department = "Administration",
+                        CanManageUsers = true,
+                        CanApproveRequests = true
+                    };
+
+                    context.AdminProfiles.Add(adminProfile);
+                    Debug.WriteLine($"✅ Created admin profile for {user.Username}");
+                }
+                else if (user.Role == UserRole.Supervisor)
+                {
+                    var supervisorProfile = new Supervisor
+                    {
+                        AccId = user.AccId,
+                        Team = "Mining Team",
+                        MineLocation = "Main Mine",
+                        Shift = "Day",
+                        CanViewReports = true,
+                        CanManageTasks = true
+                    };
+
+                    context.SupervisorProfiles.Add(supervisorProfile);
+                    Debug.WriteLine($"✅ Created supervisor profile for {user.Username}");
+                }
+
+                await context.SaveChangesAsync();
+                return true;
+            }, false);
+        }
+
+        public async Task<List<RegisterMining>> GetAllUsersAsync()
+        {
+            return await _databaseService.ExecuteSafeAsync(async context =>
+            {
+                return await context.RegisterMiningDb
+                    .Where(u => u.UpdatedAt == null) // Only active users
+                    .ToListAsync();
+            }, new List<RegisterMining>());
+        }
+
+        public async Task<bool> UpdateUserPasswordAsync(int accId, string newPassword)
+        {
+            return await _databaseService.ExecuteSafeAsync(async context =>
+            {
+                var user = await context.RegisterMiningDb
+                    .FirstOrDefaultAsync(u => u.AccId == accId);
+
+                if (user != null)
+                {
+                    // ✅ UPDATED: Use SHA256 hashing to match web app
+                    user.Salt = PasswordHasher.GenerateSalt();
+                    user.PasswordHash = PasswordHasher.HashPassword(newPassword, user.Salt);
+
+                    // REMOVED: user.UpdatedAt = DateTime.UtcNow;
+
+                    await context.SaveChangesAsync();
+                    Debug.WriteLine($"✅ Password updated for user ID: {accId}");
+                    return true;
+                }
+
+                Debug.WriteLine($"❌ User not found for password update: {accId}");
+                return false;
+            }, false);
+        }
+
+        public async Task<bool> UpdateUserAsync(RegisterMining user)
+        {
+            return await _databaseService.ExecuteSafeAsync(async context =>
+            {
+                var existingUser = await context.RegisterMiningDb
+                    .FirstOrDefaultAsync(u => u.AccId == user.AccId);
+
+                if (existingUser != null)
+                {
+                    // Check if changing to admin role and another admin already exists
+                    if (user.Role == UserRole.Admin && existingUser.Role != UserRole.Admin)
+                    {
+                        var existingAdmin = await context.RegisterMiningDb
+                            .Where(u => u.Role == UserRole.Admin && u.AccId != user.AccId && u.UpdatedAt == null)
+                            .FirstOrDefaultAsync();
+
+                        if (existingAdmin != null)
+                        {
+                            throw new InvalidOperationException("An admin user already exists. Only one admin user is allowed.");
+                        }
+                    }
+
+                    existingUser.FullName = user.FullName;
+                    existingUser.Email = user.Email;
+                    existingUser.PhoneNumber = user.PhoneNumber;
+                    existingUser.Role = user.Role;
+                    // REMOVED: existingUser.UpdatedAt = DateTime.UtcNow;
+
+                    await context.SaveChangesAsync();
+                    return true;
+                }
+                return false;
+            }, false);
+        }
+
+        public async Task<bool> DeleteUserAsync(int accId)
+        {
+            return await _databaseService.ExecuteSafeAsync(async context =>
+            {
+                var user = await context.RegisterMiningDb
+                    .FirstOrDefaultAsync(u => u.AccId == accId);
+
+                if (user != null)
+                {
+                    user.UpdatedAt = DateTime.UtcNow;
+                    await context.SaveChangesAsync();
+                    return true;
+                }
+                return false;
+            }, false);
+        }
+
+        // Test method to verify authentication
+        public async Task TestAuthenticationAsync()
+        {
+            Debug.WriteLine("🧪 Testing authentication...");
+
+            // Test admin by username
+            var adminByUsername = await ValidateUserAsync("admin", "admin123");
+            Debug.WriteLine($"🧪 Admin by username test: {adminByUsername}");
+
+            // Test admin by email
+            var adminByEmail = await ValidateUserAsync("admin@miningops.com", "admin123");
+            Debug.WriteLine($"🧪 Admin by email test: {adminByEmail}");
+
+            // Test wrong password
+            var wrongPassResult = await ValidateUserAsync("admin", "wrongpassword");
+            Debug.WriteLine($"🧪 Wrong password test: {wrongPassResult}");
+
+            // Test non-existent user
+            var nonExistentResult = await ValidateUserAsync("nonexistent", "password");
+            Debug.WriteLine($"🧪 Non-existent user test: {nonExistentResult}");
+        }
+    }
+} 
+=============================================================== 
+File: C:\Users\RC_Student_Lab\source\repos\MiningOps\MiningOps\Services\WarehouseService.cs 
+=============================================================== 
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using MiningOps.Data;
+using MiningOps.Models.Entities;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace MiningOps.Services
+{
+    public class WarehouseService
+    {
+        private readonly DatabaseService _dbService;
+
+        public WarehouseService(IConfiguration configuration)
+        {
+            _dbService = new DatabaseService(configuration);
+        }
+
+        public async Task<List<Warehouse>> GetAllWarehousesAsync()
+        {
+            using var context = _dbService.CreateDbContext();
+            return await context.WarehousesDb
+                .Include(w => w.InventoryItems)
+                .ToListAsync();
+        }
+
+        public async Task<Warehouse> GetWarehouseByIdAsync(int id)
+        {
+            using var context = _dbService.CreateDbContext();
+            return await context.WarehousesDb
+                .Include(w => w.InventoryItems)
+                .FirstOrDefaultAsync(w => w.WarehouseId == id);
+        }
+
+        public async Task<Warehouse> CreateWarehouseAsync(Warehouse warehouse)
+        {
+            using var context = _dbService.CreateDbContext();
+            warehouse.CreatedAt = DateTime.UtcNow;
+            context.WarehousesDb.Add(warehouse);
+            await context.SaveChangesAsync();
+            return warehouse;
+        }
+
+        public async Task<Warehouse> UpdateWarehouseAsync(Warehouse warehouse)
+        {
+            using var context = _dbService.CreateDbContext();
+            context.WarehousesDb.Update(warehouse);
+            await context.SaveChangesAsync();
+            return warehouse;
+        }
+
+        public async Task<bool> DeleteWarehouseAsync(int id)
+        {
+            using var context = _dbService.CreateDbContext();
+            var warehouse = await context.WarehousesDb.FindAsync(id);
+            if (warehouse != null)
+            {
+                context.WarehousesDb.Remove(warehouse);
+                await context.SaveChangesAsync();
+                return true;
+            }
+            return false;
+        }
+
+        public async Task<List<Warehouse>> GetWarehousesWithLowStockAsync()
+        {
+            using var context = _dbService.CreateDbContext();
+            return await context.WarehousesDb
+                .Include(w => w.InventoryItems)
+                .Where(w => w.InventoryItems.Any(i => i.Quantity <= i.ReorderLevel))
+                .ToListAsync();
+        }
+    }
+} 
